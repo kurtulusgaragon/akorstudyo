@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nota-Man (Müzikal Pac-Man)</title>
+    
+    <style>
+        body { background: #121212; color: #fcc419; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; position: relative; touch-action: none; }
+        canvas { max-width: 95vw; max-height: 95vw; background: #0b0f19; border: 2px solid #1c7ed6; border-radius: 8px; box-shadow: 0 0 20px rgba(28, 126, 214, 0.4); touch-action: none; }
+        .top-bar { display: flex; justify-content: space-between; width: 360px; max-width: 95vw; margin-bottom: 10px; align-items: center; font-size: 18px; font-weight: bold; }
+        .top-controls { display: flex; gap: 8px; }
+        .top-btn { background: transparent; border: 1px solid #fcc419; color: #fcc419; padding: 6px 10px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .top-btn:active { background: rgba(252, 196, 25, 0.2); }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; }
+        button.primary-btn { background: #fcc419; color: #121212; border: none; padding: 12px 24px; font-size: 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button.primary-btn:hover { background: #fab005; transform: scale(1.05); }
+        .hint { color: #adb5bd; font-size: 12px; margin-top: 15px; line-height: 1.6; }
+        kbd { background: #333; padding: 2px 6px; border-radius: 4px; color: #fff; font-family: monospace; border: 1px solid #555; }
+        @media (max-width: 768px) { .hint { display: none; } }
+    </style>
+</head>
+<body>
+    <div id="start-screen" class="overlay">
+        <h1 style="margin-top:0; color:#fcc419;">Nota-Man 🎶</h1>
+        <p style="color: #adb5bd; margin-bottom: 10px;">Detonelerden kaç, ⭐ alarak onları ye!</p>
+        <button class="primary-btn" onclick="startGame()">Oyuna Başla</button>
+        <div class="hint" id="desktop-hint"><kbd>Space</kbd> : Duraklat<br><kbd>ESC</kbd> : Stüdyoya Dön<br><kbd>Yön Tuşları</kbd> : Hareket &nbsp;|&nbsp; <kbd>+ / - / M</kbd> : Ses Kontrolü</div>
+        <div class="hint" id="mobile-hint" style="display:none;">Ekranda herhangi bir yere dokun ve kaydır!</div>
+    </div>
+    <div id="countdown-screen" class="overlay" style="display: none; background: rgba(0,0,0,0.9);"><h1 id="countdown-text" style="font-size: 70px; margin:0; transition: transform 0.15s ease-out;">La</h1><p style="color: #adb5bd; font-size: 18px; font-weight: bold; margin-top: 10px;">Hazırlan...</p></div>
+    <div id="pause-screen" class="overlay" style="display: none; background: rgba(0,0,0,0.6);"><h2 style="margin-top:0; color: #fcc419;">⏸ MOLA</h2><p style="color: white;">Devam etmek için <b>ekrana dokun</b>.</p></div>
+    <div id="second-chance-screen" class="overlay" style="display: none; background: rgba(0,0,0,0.6);"><h2 style="margin-top:0; color: #f59f00;">🎸 İkinci Şans!</h2><p style="color: white; margin-bottom: 20px; font-size:14px; padding:0 20px;">Arkada çalan ve stüdyoda görünen akor hangisi?</p><div style="display: flex; gap: 10px;"><button id="btn-ans-0" style="background: #228be6; color:white; border:none; padding:10px; font-size:14px; font-weight:bold; border-radius:6px;" onclick="checkAnswer(0)">Akor A</button><button id="btn-ans-1" style="background: #e03131; color:white; border:none; padding:10px; font-size:14px; font-weight:bold; border-radius:6px;" onclick="checkAnswer(1)">Akor B</button></div></div>
+    <div id="resume-countdown" class="overlay" style="display: none; background: rgba(0,0,0,0.85);"><h1 id="resume-text" style="font-size: 80px; color: #40c057; margin:0;">3</h1><p style="color: white; margin-top: 10px;">Eller klavyeye!</p></div>
+    <div id="game-over" class="overlay" style="display: none;"><h2 id="end-title" style="margin-top:0; color: #fa5252;">Yakalandın! 🛑</h2><p style="color: white; margin-bottom: 20px;">Tekrar oynamak için <b>aşağıya tıkla</b>.</p><button class="primary-btn" onclick="resetGame()">Tekrar Oyna</button></div>
+
+    <div class="top-bar"><span id="score">Skor: 0</span><div class="top-controls"><button class="top-btn" onclick="togglePause()">⏸</button><button class="top-btn" id="btn-mute" onclick="toggleMute()">🔊 Ses Açık</button></div></div>
+    <canvas id="gameCanvas" width="360" height="360"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); const T = 24; 
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) { document.getElementById('desktop-hint').style.display = 'none'; document.getElementById('mobile-hint').style.display = 'block'; }
+       
+
+        const initialMap = [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,3,0,0,0,0,0,1,0,0,0,0,0,3,1], [1,0,1,1,0,1,0,1,0,1,0,1,1,0,1], [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1], [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1], [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1], [1,1,1,0,1,1,0,1,0,1,1,0,1,1,1], [2,2,1,0,1,2,2,2,2,2,1,0,1,2,2], [1,1,1,0,1,2,1,1,1,2,1,0,1,1,1], [1,0,0,0,0,2,1,2,1,2,0,0,0,0,1], [1,0,1,1,1,2,1,1,1,2,1,1,1,0,1], [1,0,0,0,1,0,0,0,0,0,1,0,0,0,1], [1,1,1,0,1,0,1,1,1,0,1,0,1,1,1], [1,3,0,0,0,0,0,1,0,0,0,0,0,3,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ];
+        let map = []; let score = 0, totalDots = 0; let isPlaying = false, isPaused = false; let gameLoop, bgmInterval; let secondChanceUsed = false; let correctAnsIndex = 0;
+        let powerMode = false; let powerTimeout = null; let baseTickRate = 180; let tickRate = baseTickRate;
+        let pac = { x: 7, y: 11, dx: 0, dy: 0, nextDx: 0, nextDy: 0, mouthOpen: 0 }; let ghosts = []; let floatingTexts = []; 
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext; let actx, masterGain; let masterVolume = 0.3; let isMuted = false;
+        const chordAm = [110.00, 164.81, 220.00, 261.63, 329.63]; const chordG  = [98.00, 146.83, 196.00, 246.94, 392.00]; const chordF  = [87.31, 130.81, 174.61, 220.00, 261.63]; const chordE  = [82.41, 123.47, 164.81, 207.65, 246.94];
+        const countdownSteps = [ { name: "La (Am)", chord: chordAm, color: "#228be6" }, { name: "Sol (G)", chord: chordG, color: "#40c057" }, { name: "Fa (F)", chord: chordF, color: "#fcc419" }, { name: "Mi (E)", chord: chordE, color: "#fa5252" } ];
+        const wakaNotes = [300, 400]; let wakaIdx = 0; const jazzBass = [65.41, 73.42, 82.41, 98.00]; let bassIdx = 0; 
+
+        function initAudio() { if(actx) return; actx = new AudioContext(); masterGain = actx.createGain(); masterGain.connect(actx.destination); masterGain.gain.value = masterVolume; }
+        function toggleMute() { if (!actx) initAudio(); if (masterVolume >= 0.1) { masterVolume = 0; isMuted = true; } else { masterVolume = 0.3; isMuted = false; } masterGain.gain.value = masterVolume; document.getElementById('btn-mute').innerText = isMuted ? "🔇" : "🔊 Ses Açık"; }
+        function playAcousticStrum(frequencies) { if (isMuted || !actx) return; frequencies.forEach((freq, index) => { setTimeout(() => { const osc = actx.createOscillator(); const gain = actx.createGain(); const filter = actx.createBiquadFilter(); osc.type = 'sawtooth'; osc.frequency.value = freq; filter.type = 'lowpass'; filter.frequency.setValueAtTime(2000, actx.currentTime); filter.frequency.exponentialRampToValueAtTime(100, actx.currentTime + 1.2); osc.connect(filter); filter.connect(gain); gain.connect(masterGain); osc.start(actx.currentTime); gain.gain.setValueAtTime(0.7, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1.2); osc.stop(actx.currentTime + 1.2); osc.onended = () => { try{ osc.disconnect(); gain.disconnect(); filter.disconnect(); } catch(e){} }; }, index * 40); }); }
+        function playWaka() { if(isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'triangle'; osc.frequency.value = wakaNotes[wakaIdx]; osc.connect(gain); gain.connect(masterGain); osc.start(); gain.gain.setValueAtTime(0.3, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.1); osc.stop(actx.currentTime + 0.1); osc.onended = () => { try{ osc.disconnect(); gain.disconnect(); } catch(e){} }; wakaIdx = (wakaIdx + 1) % 2; }
+        function playJazzBass() { if(isMuted || !actx || !isPlaying || isPaused) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sine'; osc.frequency.value = jazzBass[bassIdx]; osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.4, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.25); osc.start(); osc.stop(actx.currentTime + 0.25); osc.onended = () => { try{ osc.disconnect(); gain.disconnect(); } catch(e){} }; bassIdx = (bassIdx + 1) % jazzBass.length; }
+        function playDeathSound() { if(isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sawtooth'; osc.connect(gain); gain.connect(masterGain); osc.frequency.setValueAtTime(200, actx.currentTime); osc.frequency.exponentialRampToValueAtTime(30, actx.currentTime + 0.8); gain.gain.setValueAtTime(0.5, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.8); osc.start(); osc.stop(actx.currentTime + 0.8); osc.onended = () => { try{ osc.disconnect(); gain.disconnect(); } catch(e){} }; }
+        function playPowerUpSound() { if(isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(300, actx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, actx.currentTime + 0.5); osc.connect(gain); gain.connect(masterGain); osc.start(); gain.gain.setValueAtTime(0.5, actx.currentTime); gain.gain.linearRampToValueAtTime(0.01, actx.currentTime + 0.5); osc.stop(actx.currentTime + 0.5); osc.onended = () => { try{ osc.disconnect(); gain.disconnect(); } catch(e){} }; }
+        function playEatGhostSound() { if(isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, actx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, actx.currentTime + 0.2); osc.connect(gain); gain.connect(masterGain); osc.start(); gain.gain.setValueAtTime(0.4, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.2); osc.stop(actx.currentTime + 0.2); osc.onended = () => { try{ osc.disconnect(); gain.disconnect(); } catch(e){} }; }
+
+        function startGame() { initAudio(); if(actx.state === 'suspended') actx.resume(); document.getElementById('start-screen').style.display = 'none'; const countdownScreen = document.getElementById('countdown-screen'); const countdownText = document.getElementById('countdown-text'); countdownScreen.style.display = 'flex'; let step = 0; function nextCountdown() { if (step < countdownSteps.length) { const current = countdownSteps[step]; countdownText.innerText = current.name; countdownText.style.color = current.color; countdownText.style.transform = 'scale(1.3)'; setTimeout(() => countdownText.style.transform = 'scale(1)', 150); playAcousticStrum(current.chord); step++; setTimeout(nextCountdown, 850); } else { countdownScreen.style.display = 'none'; resetGame(); } } nextCountdown(); }
+        function activatePowerMode() { powerMode = true; ghosts.forEach(g => g.isVulnerable = true); tickRate = 140; clearTimeout(powerTimeout); powerTimeout = setTimeout(() => { powerMode = false; ghosts.forEach(g => g.isVulnerable = false); tickRate = baseTickRate; }, 7000); }
+
+        function resetGame() {
+            map = initialMap.map(row => [...row]); totalDots = 0; score = 0; secondChanceUsed = false; powerMode = false; tickRate = baseTickRate; floatingTexts = []; clearTimeout(powerTimeout);
+            map.forEach(row => row.forEach(val => { if(val === 0 || val === 3) totalDots++; }));
+            pac = { x: 7, y: 11, dx: 0, dy: 0, nextDx: 0, nextDy: 0, mouthOpen: 0 };
+            ghosts = [ { x: 6, y: 7, dx: 1, dy: 0, color: '#fa5252', isVulnerable: false }, { x: 7, y: 7, dx: -1, dy: 0, color: '#f783ac', isVulnerable: false }, { x: 8, y: 7, dx: 0, dy: -1, color: '#fcc419', isVulnerable: false } ];
+            document.getElementById('score').innerText = `Skor: 0`; document.getElementById('game-over').style.display = 'none'; isPaused = false; isPlaying = true;
+            clearInterval(bgmInterval); bgmInterval = setInterval(playJazzBass, 300); lastTime = 0; accumulator = 0; cancelAnimationFrame(gameLoop); gameLoop = requestAnimationFrame(main);
+        }
+
+        function triggerSecondChance() { isPlaying = false; clearInterval(bgmInterval); document.getElementById('second-chance-screen').style.display = 'flex'; window.parent.postMessage('askChordQuestion', '*'); }
+        window.addEventListener('message', (e) => { if (e.data && e.data.type === 'chordQuestionData') { document.getElementById('btn-ans-0').innerText = e.data.options[0]; document.getElementById('btn-ans-1').innerText = e.data.options[1]; correctAnsIndex = e.data.correctIndex; } });
+        function checkAnswer(selectedIndex) {
+            document.getElementById('second-chance-screen').style.display = 'none';
+            if (selectedIndex === correctAnsIndex) {
+                const resumeScreen = document.getElementById('resume-countdown'); const resumeText = document.getElementById('resume-text'); resumeScreen.style.display = 'flex'; let count = 3; resumeText.innerText = count;
+                let countInt = setInterval(() => { count--; if(count > 0) { resumeText.innerText = count; } else { clearInterval(countInt); resumeScreen.style.display = 'none'; window.parent.postMessage('exitFocusMode', '*'); score = Math.max(0, score - 30); document.getElementById('score').innerText = `Skor: ${score}`; pac = { x: 7, y: 11, dx: 0, dy: 0, nextDx: 0, nextDy: 0, mouthOpen: 0 }; ghosts = [ { x: 6, y: 7, dx: 1, dy: 0, color: '#fa5252', isVulnerable: false }, { x: 7, y: 7, dx: -1, dy: 0, color: '#f783ac', isVulnerable: false }, { x: 8, y: 7, dx: 0, dy: -1, color: '#fcc419', isVulnerable: false } ]; isPlaying = true; bgmInterval = setInterval(playJazzBass, 300); lastTime = 0; accumulator = 0; gameLoop = requestAnimationFrame(main); } }, 1000);
+            } else { window.parent.postMessage('exitFocusMode', '*'); endGame(false); }
+        }
+
+        let lastTime = 0; let accumulator = 0;
+        function main(timestamp) {
+            if (!isPlaying || isPaused) return; if (!lastTime) lastTime = timestamp; let deltaTime = timestamp - lastTime; lastTime = timestamp;
+            if (deltaTime > 250) deltaTime = 250; accumulator += deltaTime;
+            while (accumulator >= tickRate) { accumulator -= tickRate; update(); } draw(); if (isPlaying) gameLoop = requestAnimationFrame(main);
+        }
+
+        function update() {
+            let oldPac = { x: pac.x, y: pac.y };
+            if (map[pac.y + pac.nextDy] && map[pac.y + pac.nextDy][pac.x + pac.nextDx] !== 1) { pac.dx = pac.nextDx; pac.dy = pac.nextDy; }
+            if (map[pac.y + pac.dy] && map[pac.y + pac.dy][pac.x + pac.dx] !== 1) { pac.x += pac.dx; pac.y += pac.dy; pac.mouthOpen = (pac.mouthOpen + 1) % 2; }
+            if (pac.x < 0) pac.x = map[0].length - 1; if (pac.x >= map[0].length) pac.x = 0;
+
+            floatingTexts.forEach(ft => { ft.y -= 0.6; ft.alpha -= 0.015; }); floatingTexts = floatingTexts.filter(ft => ft.alpha > 0);
+            let tile = map[pac.y][pac.x];
+            if (tile === 0 || tile === 3) {
+                let isPower = (tile === 3); map[pac.y][pac.x] = 2; 
+                if (isPower) { score += 50; activatePowerMode(); playPowerUpSound(); floatingTexts.push({ text: "GÜÇ MODU!", x: canvas.width / 2, y: canvas.height / 2 - 20, alpha: 1, color: "#fcc419", size: 24 }); floatingTexts.push({ text: "HAYALETLERİ YE!", x: canvas.width / 2, y: canvas.height / 2 + 10, alpha: 1, color: "#4dabf7", size: 18 }); } 
+                else { score += 10; playWaka(); }
+                totalDots--; document.getElementById('score').innerText = `Skor: ${score}`; if(totalDots === 0) { endGame(true); return; }
+            }
+
+            let pacmanDied = false;
+            ghosts.forEach(g => {
+                let oldG = { x: g.x, y: g.y }; let options = []; const dirs = [[0,-1],[0,1],[-1,0],[1,0]]; 
+                dirs.forEach(d => { if (d[0] === -g.dx && d[1] === -g.dy && (g.dx!==0 || g.dy!==0)) return; let ny = g.y + d[1], nx = g.x + d[0]; if (map[ny] && map[ny][nx] !== 1) options.push(d); });
+                if(options.length === 0) options.push([-g.dx, -g.dy]);
+                if(options.length > 0) { let move = options[Math.floor(Math.random() * options.length)]; g.dx = move[0]; g.dy = move[1]; g.x += g.dx; g.y += g.dy; }
+                if (g.x < 0) g.x = map[0].length - 1; if (g.x >= map[0].length) g.x = 0;
+                let collision = (g.x === pac.x && g.y === pac.y) || (g.x === oldPac.x && g.y === oldPac.y && oldG.x === pac.x && oldG.y === pac.y);
+                if (collision) {
+                    if (powerMode && g.isVulnerable) { score += 200; document.getElementById('score').innerText = `Skor: ${score}`; playEatGhostSound(); floatingTexts.push({ text: "+200", x: g.x * T + T/2, y: g.y * T - 10, alpha: 1, color: "#fff", size: 16 }); g.x = 7; g.y = 7; g.isVulnerable = false; } 
+                    else { pacmanDied = true; }
+                }
+            });
+            if (pacmanDied) { if (!secondChanceUsed) { secondChanceUsed = true; triggerSecondChance(); } else { endGame(false); } }
+        }
+
+        function draw() {
+            ctx.fillStyle = '#0b0f19'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for(let r = 0; r < map.length; r++) {
+                for(let c = 0; c < map[r].length; c++) {
+                    if (map[r][c] === 1) { ctx.shadowBlur = 8; ctx.shadowColor = "#1c7ed6"; ctx.fillStyle = '#1864ab'; ctx.fillRect(c*T, r*T, T, T); } 
+                    else if (map[r][c] === 0) { const time = Date.now() / 150; const pulse = 1 + Math.sin(time + c + r) * 0.1; ctx.save(); ctx.translate(c*T + T/2, r*T + T/2); ctx.scale(pulse, pulse); ctx.shadowBlur = 15; ctx.shadowColor = "#fcc419"; ctx.font = "14px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#fcc419"; ctx.fillText("🎵", 0, 1); ctx.restore(); } 
+                    else if (map[r][c] === 3) { const pulse = 1 + Math.sin(Date.now() / 150) * 0.2; ctx.save(); ctx.translate(c*T + T/2, r*T + T/2); ctx.scale(pulse, pulse); ctx.shadowBlur = 20; ctx.shadowColor = "#ffffff"; ctx.font = "14px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("⭐", 0, 0); ctx.restore(); }
+                }
+            }
+            ctx.save(); ctx.translate(pac.x*T + T/2, pac.y*T + T/2); if (pac.dx === 1) ctx.rotate(0); else if (pac.dx === -1) ctx.rotate(Math.PI); else if (pac.dy === 1) ctx.rotate(Math.PI/2); else if (pac.dy === -1) ctx.rotate(-Math.PI/2);
+            ctx.beginPath(); let mouth = pac.mouthOpen === 0 ? 0.2 : 0.05; ctx.arc(0, 0, T/2 - 2, mouth * Math.PI, (2 - mouth) * Math.PI); ctx.lineTo(0,0); ctx.shadowBlur = 15; ctx.shadowColor = "#fcc419"; ctx.fillStyle = '#fcc419'; ctx.fill(); ctx.restore();
+
+            ghosts.forEach(g => {
+                let currentColor = (powerMode && g.isVulnerable) ? '#4dabf7' : g.color; ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = currentColor; ctx.fillStyle = currentColor; ctx.beginPath(); let gx = g.x*T, gy = g.y*T; ctx.arc(gx + T/2, gy + T/2, T/2 - 2, Math.PI, 0); ctx.lineTo(gx + T - 2, gy + T - 2); ctx.lineTo(gx + T/2, gy + T/2 + 2); ctx.lineTo(gx + 2, gy + T - 2); ctx.closePath(); ctx.fill();
+                ctx.shadowBlur = 0; ctx.fillStyle = (powerMode && g.isVulnerable) ? "#ffffff" : "white"; ctx.beginPath(); ctx.arc(gx + T/3, gy + T/3, 3, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(gx + 2*T/3, gy + T/3, 3, 0, Math.PI*2); ctx.fill(); ctx.restore();
+            });
+
+            floatingTexts.forEach(ft => { ctx.save(); ctx.globalAlpha = Math.max(0, ft.alpha); ctx.font = `bold ${ft.size}px Arial`; ctx.textAlign = "center"; ctx.fillStyle = ft.color; ctx.shadowBlur = 15; ctx.shadowColor = ft.color; ctx.fillText(ft.text, ft.x, ft.y); ctx.restore(); });
+        }
+
+        function endGame(isWin) { isPlaying = false; clearInterval(bgmInterval); document.getElementById('end-title').innerText = isWin ? "Kazandın! 🎉" : "Yakalandın! 🛑"; document.getElementById('end-title').style.color = isWin ? "#40c057" : "#fa5252"; document.getElementById('game-over').style.display = 'flex'; if(!isWin) playDeathSound(); }
+        function togglePause() { if(!isPlaying) return; isPaused = !isPaused; document.getElementById('pause-screen').style.display = isPaused ? 'flex' : 'none'; if(!isPaused) { lastTime = 0; gameLoop = requestAnimationFrame(main); } else { cancelAnimationFrame(gameLoop); } }
+        document.getElementById('pause-screen').addEventListener('click', function() { togglePause(); });
+
+        document.addEventListener("keydown", (e) => {
+            if([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
+            if(e.key === 'Escape' || e.code === 'Escape') { window.parent.postMessage('closeGameModal', '*'); return; }
+            if(e.code === 'Space') { togglePause(); return; }
+            if (e.code === 'Enter' && !isPlaying) { e.preventDefault(); const startScreen = document.getElementById('start-screen'); if (startScreen.style.display !== 'none') startGame(); else resetGame(); return; }            
+            if(isPaused || !isPlaying) return;
+            if (e.keyCode === 37) { pac.nextDx = -1; pac.nextDy = 0; } if (e.keyCode === 38) { pac.nextDx = 0; pac.nextDy = -1; } if (e.keyCode === 39) { pac.nextDx = 1; pac.nextDy = 0; } if (e.keyCode === 40) { pac.nextDx = 0; pac.nextDy = 1; }
+        });
+
+        let touchStartX = 0; let touchStartY = 0; const swipeThreshold = 10;
+        document.addEventListener('touchstart', (e) => { if(e.target.tagName === 'BUTTON' || e.target.closest('button')) return; touchStartX = e.changedTouches[0].clientX; touchStartY = e.changedTouches[0].clientY; }, {passive: false});
+        document.addEventListener('touchmove', (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.closest('button')) return; if(!isPlaying || isPaused) return; e.preventDefault();
+            let touchX = e.changedTouches[0].clientX; let touchY = e.changedTouches[0].clientY; let dx = touchX - touchStartX; let dy = touchY - touchStartY;
+            if (Math.abs(dx) > swipeThreshold || Math.abs(dy) > swipeThreshold) {
+                if (Math.abs(dx) > Math.abs(dy)) { if (dx > 0) { pac.nextDx = 1; pac.nextDy = 0; } else { pac.nextDx = -1; pac.nextDy = 0; } } 
+                else { if (dy > 0) { pac.nextDx = 0; pac.nextDy = 1; } else { pac.nextDx = 0; pac.nextDy = -1; } }
+                if (navigator.vibrate) navigator.vibrate(10); touchStartX = touchX; touchStartY = touchY;
+            }
+        }, {passive: false});
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+#netlify-badge, a[href*="netlify.com/?utm_source=badge"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /yilan.html
+Disallow: /pacman.html
+Disallow: /riverraid.html
+Disallow: /tetris.html
+Sitemap: https://www.akorstudyo.com/sitemap.xml

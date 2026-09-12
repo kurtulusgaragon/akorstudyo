@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>River Raid: Klasik Atari</title>
+    <style>
+        body { background: #121212; color: #fff; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        canvas { background: #1864ab; border: 3px solid #adb5bd; border-radius: 4px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.9); image-rendering: pixelated; }
+        .top-bar { display: flex; justify-content: space-between; width: 360px; margin-bottom: 4px; align-items: center; font-size: 13px; font-weight: bold; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; text-align: center; }
+        button { background: #e03131; color: white; border: 2px solid #fff; padding: 10px 20px; font-size: 16px; cursor: pointer; font-weight: bold; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
+        button:hover { background: #c92a2a; }
+        #btn-mute { background: transparent; border: 1px solid #fff; color: #fff; padding: 2px 6px; font-size: 11px; cursor: pointer; }
+        .hint { color: #adb5bd; font-size: 11px; margin-top: 12px; line-height: 1.5; }
+        kbd { background: #333; padding: 2px 5px; color: #fff; border: 1px solid #777; font-weight: bold; }
+        #fuel-container { width: 360px; height: 16px; border: 2px solid #fff; background: #000; margin-top: 4px; position: relative; }
+        #fuel-bar { height: 100%; background: #fcc419; width: 100%; transition: width 0.1s linear; }
+        #fuel-text { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 11px; color: #fff; font-weight: bold; line-height: 14px; text-shadow: 1px 1px 0 #000; }
+        
+        #mobile-controls { display: none; width: 100%; max-width: 360px; justify-content: space-between; margin-top: 10px; padding: 0 10px; box-sizing: border-box; z-index: 10;}
+        .hitbox { background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 8px; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; user-select: none; touch-action: none; }
+        .hitbox:active { background: rgba(255,255,255,0.4); transform: scale(0.9); }
+        .hitbox.fire-btn { width: 80px; background: rgba(224, 49, 49, 0.3); border-color: #e03131; }
+        .hitbox.fire-btn:active { background: rgba(224, 49, 49, 0.7); }
+        .hitbox.nuke-btn { width: 60px; background: rgba(250, 82, 82, 0.2); border-color: #fa5252; font-size: 20px;}
+        .hitbox.nuke-btn:active { background: rgba(250, 82, 82, 0.6); }
+
+        @media (pointer: coarse) { #mobile-controls { display: flex; } .hint { display: none; } canvas { max-height: 45vh; } }
+    </style>
+</head>
+<body>
+    <div id="start-screen" class="overlay" style="display: flex;">
+        <h1 style="margin:0 0 10px 0; color:#e03131; font-size: 32px; text-shadow: 2px 2px 0 #fff;">RIVER RAID</h1>
+        <h2 style="color: #fcc419; margin: 0 0 15px 0; font-size: 14px;">ULTIMATE STUDIO EDITION</h2>
+        <p style="color: #fff; margin-bottom: 15px; font-size: 13px;">Adalara dikkat et, gece modunda hayatta kal!</p>
+        <button onclick="startGame()">OYUNA BAŞLA</button>
+        <div class="hint"><kbd>Space</kbd>: Ateş | <kbd>Ok Tuşları</kbd>: Yön/Hız<br><kbd>B</kbd>: Smart Bomb (Nuke) | <kbd>P</kbd>: Mola</div>
+    </div>
+    <div id="pause-screen" class="overlay" style="display: none;"><h2 style="margin:0 0 10px 0; color: #fff;">II PAUSE</h2><p style="color: #fcc419; font-size: 13px;">Devam etmek için <b>P</b>'ye bas.</p></div>
+    <div id="second-chance-screen" class="overlay" style="display: none; background: rgba(0,0,0,0.85);"><h2 style="margin-top:0; color: #fcc419;">MAYDAY! İkinci Şans!</h2><p style="color: white; margin-bottom: 20px; font-size:14px; padding:0 20px;">Arkada çalan akor hangisi?</p><div style="display: flex; gap: 10px;"><button id="btn-ans-0" style="background: #228be6; font-size:14px;" onclick="checkAnswer(0)">A</button><button id="btn-ans-1" style="background: #e03131; font-size:14px;" onclick="checkAnswer(1)">B</button></div></div>
+    <div id="resume-countdown" class="overlay" style="display: none; background: rgba(0,0,0,0.9);"><h1 id="resume-text" style="font-size: 80px; color: #40c057; margin:0;">3</h1><p style="color: white; margin-top: 10px;">Eller klavyeye!</p></div>
+    <div id="game-over" class="overlay" style="display: none;"><h2 id="end-title" style="margin:0 0 10px 0; color: #fa5252; font-size: 26px;">CRASHED!</h2><p style="color: white; margin-bottom: 15px; font-size: 13px;">Yeniden oynamak için <b>ENTER</b>'a bas.</p><button onclick="resetGame()">YENİDEN BAŞLA</button></div>
+
+    <div class="top-bar">
+        <span id="score-text">SCORE: 0</span>
+        <span id="combo-text" style="color:#4dabf7; font-weight:900;"></span>
+        <span id="nuke-text" style="color:#fa5252;">💣: 1</span>
+        <span id="level-text" style="color: #fcc419;">LVL: 1</span>
+        <button id="btn-mute" onclick="toggleMute()">🔊</button>
+    </div>
+    <canvas id="gameCanvas" width="360" height="320"></canvas>
+    
+    <div id="fuel-container"><div id="fuel-bar"></div><div id="fuel-text">FUEL</div></div>
+    
+    <div id="mobile-controls">
+        <div style="display:flex; gap:10px;">
+            <div class="hitbox" id="m-left">⬅️</div>
+            <div class="hitbox" id="m-right">➡️</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <div class="hitbox nuke-btn" id="m-nuke">💣</div>
+            <div class="hitbox fire-btn" id="m-fire">🔥</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); const CW = canvas.width; const CH = canvas.height;
+        let score = 0, fuel = 100, level = 1; let isPlaying = false, isPaused = false; let frameCount = 0;
+        let player = { x: CW/2, y: 260, speed: 4 }; let bullets = []; let enemies = []; let fuelDepots = []; let floatingTexts = []; let river = []; let keys = { ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false };
+        let scrollSpeed = 2.5; let secondChanceUsed = false; let correctAnsIndex = 0; let pendingEndReason = "";
+        
+        // Yeni Mekanikler: Nehir Merkezi, Adalar, Gece Modu, Warp
+        let rCenter = CW/2, rWidth = 220, tCenter = CW/2, tWidth = 220;
+        let enemyBullets = [], particles = [], powerups = [], bosses = [], islands = [];
+        let combo = 0, comboTimer = 0, shieldTimer = 0, magnetTimer = 0, nukes = 1, screenShake = 0, nextBossScore = 2000, warpTimer = 0;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext; let actx, masterGain; let masterVolume = 0.4; let isMuted = false; let bgmInterval;
+        const chordsData = [{ name: "Am", freqs: [220.00, 261.63, 329.63], color: "#74c0fc" }, { name: "C",  freqs: [261.63, 329.63, 392.00], color: "#b2f2bb" }, { name: "G",  freqs: [196.00, 246.94, 293.66], color: "#ffc9c9" }, { name: "D",  freqs: [293.66, 369.99, 440.00], color: "#fcc419" }, { name: "Em", freqs: [164.81, 196.00, 246.94], color: "#ffa8a8" }, { name: "F",  freqs: [174.61, 220.00, 261.63], color: "#eebefa" }];
+        const notesData = [{name: "Do", freq: 523.25, char: "🎵", color: "#fa5252"}, {name: "Re", freq: 587.33, char: "♩", color: "#fd7e14"}, {name: "Mi", freq: 659.25, char: "♫", color: "#fcc419"}, {name: "Fa", freq: 698.46, char: "♬", color: "#40c057"}, {name: "Sol", freq: 783.99, char: "♭", color: "#228be6"}, {name: "La", freq: 880.00, char: "♮", color: "#7950f2"}, {name: "Si", freq: 987.77, char: "♯", color: "#e64980"}];
+
+        function initAudio() { if(actx) return; actx = new AudioContext(); masterGain = actx.createGain(); masterGain.connect(actx.destination); masterGain.gain.value = masterVolume; }
+        function toggleMute() { if (!actx) initAudio(); if (masterVolume >= 0.1) { masterVolume = 0; isMuted = true; } else { masterVolume = 0.4; isMuted = false; } masterGain.gain.value = masterVolume; document.getElementById('btn-mute').innerText = isMuted ? "🔇" : "🔊"; }
+
+        const bassLine = [130.81, 130.81, 155.56, 155.56, 174.61, 174.61, 155.56, 155.56]; let bassIndex = 0;
+        function playBGM() { if (isMuted || !actx || !isPlaying || isPaused) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'square'; osc.frequency.value = bassLine[bassIndex]; osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.04, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.15); osc.start(); osc.stop(actx.currentTime + 0.15); bassIndex = (bassIndex + 1) % bassLine.length; }
+        function playShoot() { if (isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'square'; osc.frequency.setValueAtTime(800, actx.currentTime); osc.frequency.exponentialRampToValueAtTime(300, actx.currentTime + 0.1); osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.25, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.1); osc.start(); osc.stop(actx.currentTime + 0.1); }
+        function playExplosion() { if (isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, actx.currentTime); osc.frequency.exponentialRampToValueAtTime(10, actx.currentTime + 0.4); osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.5, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.4); osc.start(); osc.stop(actx.currentTime + 0.4); }
+        function playChord(chordObj) { if (isMuted || !actx) return; chordObj.freqs.forEach(freq => { const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'triangle'; osc.frequency.value = freq; osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.3, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.5); osc.start(); osc.stop(actx.currentTime + 0.5); }); }
+        function playNoteHit(freq) { if (isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, actx.currentTime); osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.35, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.3); osc.start(); osc.stop(actx.currentTime + 0.3); }
+        function playPowerup() { if (isMuted || !actx) return; [440, 554, 659, 880].forEach((f, i) => { setTimeout(() => { const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sine'; osc.frequency.value = f; osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.4, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.2); osc.start(); osc.stop(actx.currentTime+0.2); }, i * 50); }); }
+        function playNuke() { if(isMuted || !actx) return; const osc = actx.createOscillator(); const gain = actx.createGain(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(50, actx.currentTime); osc.frequency.exponentialRampToValueAtTime(1, actx.currentTime + 1.5); osc.connect(gain); gain.connect(masterGain); gain.gain.setValueAtTime(0.8, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1.5); osc.start(); osc.stop(actx.currentTime + 1.5); }
+
+        function addFloatingText(x, y, text, color, size = 18) { floatingTexts.push({ x: x, y: y, text: text, color: color, alpha: 1.0, size: size }); }
+        function spawnParticles(x, y, color, count) { for(let i=0; i<count; i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*8, vy:(Math.random()-0.5)*8, alpha:1.0, color:color, size: 2 + Math.random()*3}); }
+
+        function startGame() { initAudio(); if(actx.state === 'suspended') actx.resume(); document.getElementById('start-screen').style.display = 'none'; resetGame(); }
+        
+        function initRiver() { 
+            river = []; rCenter = CW/2; rWidth = 220; tCenter = CW/2; tWidth = 220;
+            for(let y = -40; y <= CH + 40; y += 15) { river.push({ y: y, l: rCenter - rWidth/2, r: rCenter + rWidth/2 }); } 
+        }
+        
+        function generateRiverSegment(yPos) { 
+            let minW = Math.max(120, 260 - level * 15); let maxW = Math.max(160, 320 - level * 10); 
+            if(frameCount % 60 === 0) { 
+                if (Math.random() > 0.85) tWidth = minW; // Dar Kanyon
+                else tWidth = minW + Math.random() * (maxW - minW); 
+                
+                let safePad = tWidth / 2 + 10;
+                let minC = safePad; let maxC = CW - safePad;
+                tCenter = Math.max(minC, Math.min(maxC, tCenter + (Math.random()-0.5)*150));
+            } 
+            rCenter += (tCenter - rCenter) * 0.06; rWidth += (tWidth - rWidth) * 0.06; 
+            river.unshift({ y: yPos, l: rCenter - rWidth/2, r: rCenter + rWidth/2 }); 
+        }
+
+        function resetGame() {
+            score = 0; fuel = 100; level = 1; frameCount = 0; secondChanceUsed = false; player = { x: CW/2, y: 260, speed: 4 }; 
+            bullets = []; enemies = []; fuelDepots = []; floatingTexts = []; 
+            enemyBullets = []; particles = []; powerups = []; bosses = []; islands = [];
+            combo = 0; comboTimer = 0; shieldTimer = 0; magnetTimer = 0; nukes = 1; screenShake = 0; warpTimer = 0; nextBossScore = 2000;
+            initRiver(); updateUI(); document.getElementById('game-over').style.display = 'none'; isPaused = false; isPlaying = true;
+            clearInterval(bgmInterval); bgmInterval = setInterval(playBGM, 200); lastFrameTime = 0; requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('message', (e) => { if (e.data && e.data.type === 'chordQuestionData') { document.getElementById('btn-ans-0').innerText = e.data.options[0]; document.getElementById('btn-ans-1').innerText = e.data.options[1]; correctAnsIndex = e.data.correctIndex; } });
+        function checkAnswer(selectedIndex) {
+            document.getElementById('second-chance-screen').style.display = 'none';
+            if (selectedIndex === correctAnsIndex) {
+                const resumeScreen = document.getElementById('resume-countdown'); const resumeText = document.getElementById('resume-text'); resumeScreen.style.display = 'flex'; let count = 3; resumeText.innerText = count;
+                let countInt = setInterval(() => { count--; if(count > 0) { resumeText.innerText = count; } else { clearInterval(countInt); resumeScreen.style.display = 'none'; window.parent.postMessage('exitFocusMode', '*'); score = Math.max(0, score - 30); fuel = Math.max(50, fuel); shieldTimer = 180; player.x = CW / 2; isPlaying = true; bgmInterval = setInterval(playBGM, 200); lastFrameTime = 0; requestAnimationFrame(gameLoop); } }, 1000);
+            } else { window.parent.postMessage('exitFocusMode', '*'); endGame(pendingEndReason, true); }
+        }
+
+        function getRiverBounds(y) { for(let i=0; i<river.length-1; i++) { if(y >= river[i].y && y <= river[i+1].y) return river[i]; } return river[0]; }
+        function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) { return !(x2 > x1 + w1 || x2 + w2 < x1 || y2 > y1 + h1 || y2 + h2 < y1); }
+
+        function triggerNuke() {
+            if (nukes > 0 && isPlaying && !isPaused) {
+                nukes--; playNuke(); screenShake = 40;
+                enemies.forEach(e => { spawnParticles(e.x, e.y, e.note.color, 15); score += 50; });
+                enemyBullets = []; enemies = [];
+                bosses.forEach(b => { b.hp -= 20; spawnParticles(b.x+b.w/2, b.y+b.h/2, '#fa5252', 20); });
+                addFloatingText(CW/2, CH/2, "SMART BOMB DEPLOYED!", "#fa5252", 24);
+            }
+        }
+
+        function update() {
+            if(!isPlaying || isPaused) return; frameCount++; level = Math.floor(score / 1500) + 1;
+            
+            // Warp (Hyper-Drive) Kontrolü
+            if (warpTimer > 0) { warpTimer--; scrollSpeed = 12; shieldTimer = Math.max(shieldTimer, 10); if(frameCount % 3 === 0) spawnParticles(player.x + (Math.random()-0.5)*20, player.y + 10, '#4dabf7', 2); } 
+            else { scrollSpeed = 2.5 + (level * 0.2); }
+
+            if (keys.ArrowUp) { scrollSpeed += 2; fuel -= 0.12; score += 1; } if (keys.ArrowDown) { scrollSpeed -= 1.2; } if (keys.ArrowLeft) player.x -= player.speed; if (keys.ArrowRight) player.x += player.speed; fuel -= 0.04; 
+            
+            // Timer Azalmaları
+            if(comboTimer > 0) { comboTimer--; if(comboTimer <= 0) combo = 0; }
+            if(shieldTimer > 0) shieldTimer--;
+            if(magnetTimer > 0) magnetTimer--;
+            if(screenShake > 0) screenShake--;
+
+            for(let i=0; i<river.length; i++) river[i].y += scrollSpeed;
+            if(river[river.length-1].y > CH + 40) { river.pop(); generateRiverSegment(river[0].y - 15); score += 2; }
+
+            // Boss Spawn Algoritması
+            if (score > nextBossScore && bosses.length === 0 && level >= 1) {
+                bosses.push({x: CW/2 - 40, y: -100, w: 80, h: 50, hp: 20 + (level*5), maxHp: 20 + (level*5), dx: 1.5});
+                nextBossScore += 2500; addFloatingText(CW/2, CH/2, "WARNING: BATTLESHIP!", "#fa5252", 22);
+            }
+
+            // Düşman, Yakıt ve ADA (Island) Spawn
+            let spawnRate = Math.max(25, 75 - (level * 5)); 
+            if (frameCount % spawnRate === 0 && bosses.length === 0 && warpTimer <= 0) {
+                let rBounds = river[0]; 
+                if (Math.random() > 0.88 && rWidth > 180 && frameCount > 200) {
+                    // Ada Spawn (Çatallanma)
+                    let iW = 30 + Math.random() * 40; let iH = 100 + Math.random() * 120;
+                    islands.push({x: rCenter - iW/2, y: -iH, w: iW, h: iH});
+                    tWidth = 280; // Oyuncu geçebilsin diye nehri genişlet
+                } else {
+                    let isFuel = Math.random() > 0.75; let spawnX = rBounds.l + 15 + Math.random() * (rBounds.r - rBounds.l - 50);
+                    if (isFuel) { let chord = chordsData[Math.floor(Math.random() * chordsData.length)]; fuelDepots.push({ x: spawnX, y: -40, w: 24, h: 42, chord: chord }); } 
+                    else { let note = notesData[Math.floor(Math.random() * notesData.length)]; let dir = Math.random() > 0.5 ? 1 : -1; let spd = dir * (1 + Math.random() * (level * 0.4)); enemies.push({ x: spawnX, y: -40, w: 30, h: 30, dx: spd, note: note }); }
+                }
+            }
+
+            // Magnet (Mıknatıs) Mantığı
+            if (magnetTimer > 0) { fuelDepots.forEach(f => { let dx = player.x - (f.x + f.w/2); let dy = player.y - (f.y + f.h/2); let dist = Math.sqrt(dx*dx + dy*dy); if (dist < 180) { f.x += dx * 0.08; f.y += dy * 0.08; } }); }
+
+            // Parçacıklar ve Yazılar
+            for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.alpha -= 0.02; if (p.alpha <= 0) particles.splice(i, 1); }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) { floatingTexts[i].y -= 1; floatingTexts[i].alpha -= 0.02; if (floatingTexts[i].alpha <= 0) floatingTexts.splice(i, 1); }
+            
+            // Oyuncu Mermileri
+            for (let i = bullets.length - 1; i >= 0; i--) { bullets[i].y += bullets[i].dy; bullets[i].x += bullets[i].dx; if (bullets[i].y < 0) bullets.splice(i, 1); }
+            // Düşman Mermileri
+            for (let i = enemyBullets.length - 1; i >= 0; i--) { 
+                enemyBullets[i].y += enemyBullets[i].dy; enemyBullets[i].x += enemyBullets[i].dx; 
+                if (enemyBullets[i].y > CH) { enemyBullets.splice(i, 1); continue; }
+                if (rectIntersect(player.x - 8, player.y - 10, 16, 20, enemyBullets[i].x, enemyBullets[i].y, 4, 10)) {
+                    if (shieldTimer > 0) { enemyBullets.splice(i, 1); spawnParticles(player.x, player.y, '#74c0fc', 5); } 
+                    else { endGame("VURULDUN!"); }
+                }
+            }
+
+            // Adalar (Islands)
+            for (let i = islands.length - 1; i >= 0; i--) {
+                let isl = islands[i]; isl.y += scrollSpeed;
+                if (isl.y > CH) { islands.splice(i, 1); continue; }
+                if (shieldTimer <= 0 && rectIntersect(player.x - 10, player.y - 14, 20, 28, isl.x, isl.y, isl.w, isl.h)) { endGame("ADAYA ÇARPTIN!"); }
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    if (rectIntersect(bullets[j].x, bullets[j].y, 4, 10, isl.x, isl.y, isl.w, isl.h)) { spawnParticles(bullets[j].x, bullets[j].y, '#2b8a3e', 3); bullets.splice(j, 1); }
+                }
+            }
+
+            // Power-Up Toplama
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                let p = powerups[i]; p.y += scrollSpeed;
+                if (rectIntersect(player.x - 10, player.y - 14, 20, 28, p.x, p.y, p.w, p.h)) {
+                    playPowerup();
+                    if (p.type === 'shield') shieldTimer = 480; 
+                    if (p.type === 'magnet') magnetTimer = 480; 
+                    if (p.type === 'nuke') nukes++;
+                    addFloatingText(player.x, player.y-20, p.type.toUpperCase(), "#b2f2bb", 14);
+                    powerups.splice(i, 1);
+                }
+            }
+
+            // Boss Güncellemeleri
+            for (let i = bosses.length - 1; i >= 0; i--) {
+                let b = bosses[i];
+                if (b.y < 40) b.y += scrollSpeed * 0.5; 
+                else {
+                    b.x += b.dx; let rb = getRiverBounds(b.y);
+                    if (b.x < rb.l + 10 || b.x + b.w > rb.r - 10) b.dx *= -1;
+                    if (frameCount % 60 === 0 && Math.random() > 0.3) { enemyBullets.push({x: b.x + 15, y: b.y + b.h, dx: -1, dy: 5}); enemyBullets.push({x: b.x + b.w - 15, y: b.y + b.h, dx: 1, dy: 5}); }
+                }
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let bul = bullets[j];
+                    if (rectIntersect(bul.x, bul.y, 4, 10, b.x, b.y, b.w, b.h)) {
+                        b.hp--; spawnParticles(bul.x, bul.y, '#ffec99', 3); bullets.splice(j, 1);
+                        if (b.hp <= 0) {
+                            screenShake = 30; playExplosion(); score += 1000; fuel = 100; warpTimer = 300; // Warp Modu Başlar!
+                            spawnParticles(b.x+b.w/2, b.y+b.h/2, '#fa5252', 50);
+                            addFloatingText(CW/2, CH/2, "HYPER DRIVE ENGAGED!", "#4dabf7", 22);
+                            bosses.splice(i, 1);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Düşman Güncellemeleri
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i]; e.y += scrollSpeed; e.x += e.dx; let rBounds = getRiverBounds(e.y);
+                if (e.x < rBounds.l || e.x + e.w > rBounds.r) e.dx *= -1; 
+                if (level > 1 && score > 1500 && Math.random() < 0.005 + (level*0.001)) { enemyBullets.push({x: e.x + e.w/2, y: e.y + e.h, dx: 0, dy: 4 + (level*0.5)}); }
+                if (e.y > CH) { enemies.splice(i, 1); continue; }
+                
+                if (shieldTimer > 0 && rectIntersect(player.x - 15, player.y - 20, 30, 40, e.x, e.y, e.w, e.h)) {
+                    playExplosion(); spawnParticles(e.x, e.y, e.note.color, 12); score += 50; screenShake = 5; enemies.splice(i, 1); continue;
+                }
+
+                let hit = false;
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let b = bullets[j];
+                    if (rectIntersect(b.x, b.y, 4, 10, e.x, e.y, e.w, e.h)) { 
+                        playNoteHit(e.note.freq); addFloatingText(e.x + e.w/2, e.y, e.note.name, e.note.color, 16); spawnParticles(e.x+e.w/2, e.y+e.h/2, e.note.color, 8);
+                        combo++; comboTimer = 180; let comboMult = Math.min(5, 1 + Math.floor(combo / 5)); score += 50 * comboMult;
+                        if (combo % 5 === 0) { let texts = ["NICE!", "SOLO!", "RIFF MASTER!", "OVERDRIVE!", "GODLIKE!"]; addFloatingText(CW/2, CH/2 - 50, texts[Math.min(4, Math.floor(combo/5)-1)], "#fcc419", 26); }
+                        if (Math.random() < 0.1) { let types = ['shield', 'nuke', 'magnet']; powerups.push({x: e.x, y: e.y, w: 22, h: 22, type: types[Math.floor(Math.random() * types.length)]}); }
+                        enemies.splice(i, 1); bullets.splice(j, 1); hit = true; break; 
+                    }
+                }
+                if(hit) continue;
+                if (rectIntersect(player.x - 10, player.y - 14, 20, 28, e.x, e.y, e.w, e.h)) { endGame("NOTAYA ÇARPTIN!"); }
+            }
+
+            for (let i = fuelDepots.length - 1; i >= 0; i--) {
+                let f = fuelDepots[i]; f.y += scrollSpeed;
+                if (f.y > CH) { fuelDepots.splice(i, 1); continue; }
+                if (rectIntersect(player.x - 10, player.y - 14, 20, 28, f.x, f.y, f.w, f.h)) { fuel = Math.min(100, fuel + 30); playChord(f.chord); addFloatingText(player.x + 20, player.y - 10, f.chord.name, f.chord.color, 16); fuelDepots.splice(i, 1); continue; }
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    let b = bullets[j];
+                    if (rectIntersect(b.x, b.y, 4, 10, f.x, f.y, f.w, f.h)) { playExplosion(); spawnParticles(f.x+f.w/2, f.y+f.h/2, '#e03131', 15); screenShake=8; score += 80; fuelDepots.splice(i, 1); bullets.splice(j, 1); break; }
+                }
+            }
+
+            let pBounds = getRiverBounds(player.y);
+            if (shieldTimer <= 0 && (player.x - 10 < pBounds.l || player.x + 10 > pBounds.r)) { endGame("KIYIYA ÇARPTIN!"); }
+            if (fuel <= 0) endGame("YAKIT BİTTİ!");
+            updateUI();
+        }
+
+        function draw() {
+            ctx.save();
+            if (screenShake > 0) { ctx.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake); }
+
+            ctx.fillStyle = '#2b8a3e'; ctx.fillRect(0, 0, CW, CH);
+            ctx.fillStyle = '#1864ab'; ctx.beginPath(); ctx.moveTo(river[0].l, river[0].y); for(let i=1; i<river.length; i++) ctx.lineTo(river[i].l, river[i].y); for(let i=river.length-1; i>=0; i--) ctx.lineTo(river[i].r, river[i].y); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#74c0fc'; ctx.lineWidth = 2.5; ctx.beginPath(); for(let i=0; i<river.length; i++) { if(i===0) ctx.moveTo(river[i].l, river[i].y); else ctx.lineTo(river[i].l, river[i].y); } ctx.stroke();
+            ctx.beginPath(); for(let i=0; i<river.length; i++) { if(i===0) ctx.moveTo(river[i].r, river[i].y); else ctx.lineTo(river[i].r, river[i].y); } ctx.stroke();
+
+            // Adaların Çizimi
+            islands.forEach(isl => {
+                ctx.fillStyle = '#2b8a3e'; ctx.fillRect(isl.x, isl.y, isl.w, isl.h);
+                ctx.strokeStyle = '#74c0fc'; ctx.lineWidth = 2.5; ctx.strokeRect(isl.x, isl.y, isl.w, isl.h);
+            });
+
+            fuelDepots.forEach(f => { ctx.shadowBlur = 15; ctx.shadowColor = '#e03131'; ctx.fillStyle = '#e03131'; ctx.fillRect(f.x, f.y, f.w, f.h); ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.fillRect(f.x + f.w/4, f.y, f.w/2, f.h); ctx.fillStyle = '#000'; ctx.font = "bold 9px Courier"; ctx.fillText("F", f.x+f.w/2 - 3, f.y + 10); ctx.fillText("U", f.x+f.w/2 - 3, f.y + 20); ctx.fillText("E", f.x+f.w/2 - 3, f.y + 30); ctx.fillText("L", f.x+f.w/2 - 3, f.y + 40); });
+            
+            const pTypeVisuals = { 'shield': '🛡️', 'nuke': '💣', 'magnet': '🧲' };
+            powerups.forEach(p => { ctx.fillStyle = '#fff'; ctx.font = '20px Arial'; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(pTypeVisuals[p.type], p.x + p.w/2, p.y + p.h/2); });
+
+            enemies.forEach(e => { ctx.fillStyle = '#212529'; ctx.beginPath(); ctx.arc(e.x + e.w/2, e.y + e.h/2, e.w/2, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 10; ctx.shadowColor = e.note.color; ctx.strokeStyle = e.note.color; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = e.note.color; ctx.font = "bold 18px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(e.note.char, e.x + e.w/2, e.y + e.h/2 + 1); ctx.shadowBlur = 0; });
+            
+            bosses.forEach(b => {
+                ctx.fillStyle = '#343a40'; ctx.fillRect(b.x, b.y, b.w, b.h); ctx.fillStyle = '#fa5252'; ctx.fillRect(b.x+10, b.y+b.h-10, 10, 15); ctx.fillRect(b.x+b.w-20, b.y+b.h-10, 10, 15);
+                ctx.fillStyle = '#000'; ctx.fillRect(b.x, b.y-10, b.w, 6); ctx.fillStyle = '#40c057'; ctx.fillRect(b.x, b.y-10, b.w * (b.hp/b.maxHp), 6);
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Courier New'; ctx.textAlign="center"; ctx.fillText("BOSS", b.x + b.w/2, b.y + b.h/2 + 4);
+            });
+
+            ctx.shadowBlur = 8; ctx.shadowColor = '#ffec99'; ctx.fillStyle = '#ffec99'; bullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 10)); ctx.shadowBlur = 0;
+            ctx.shadowBlur = 8; ctx.shadowColor = '#fa5252'; ctx.fillStyle = '#fa5252'; enemyBullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 10)); ctx.shadowBlur = 0;
+
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.fillRect(p.x, p.y, p.size, p.size); ctx.globalAlpha = 1.0; });
+
+            ctx.save(); ctx.translate(player.x, player.y); 
+            if (shieldTimer > 0) { ctx.beginPath(); ctx.arc(0, 0, 22 + Math.random()*2, 0, Math.PI*2); ctx.strokeStyle = `rgba(51, 154, 240, ${0.5 + Math.random()*0.5})`; ctx.lineWidth = 3; ctx.stroke(); }
+            if (magnetTimer > 0) { ctx.beginPath(); ctx.arc(0, 0, 32 + Math.random()*5, 0, Math.PI*2); ctx.strokeStyle = `rgba(252, 196, 25, ${0.2 + Math.random()*0.3})`; ctx.lineWidth = 1; ctx.stroke(); }
+            ctx.fillStyle = '#f8f9fa'; ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(3, -4); ctx.lineTo(13, 6); ctx.lineTo(3, 2); ctx.lineTo(2, 12); ctx.lineTo(0, 8); ctx.lineTo(-2, 12); ctx.lineTo(-3, 2); ctx.lineTo(-13, 6); ctx.lineTo(-3, -4); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#1864ab'; ctx.fillRect(-1, -6, 2, 5); 
+            ctx.restore();
+
+            // Gece Modu Karanlık Işığı
+            let isNightMode = (level % 2 === 0 && level >= 2);
+            if (isNightMode) {
+                let grad = ctx.createRadialGradient(player.x, player.y - 30, 20, player.x, player.y - 10, 180);
+                grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.96)');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, CW, CH);
+            }
+
+            floatingTexts.forEach(ft => { 
+                let rgb = "#fff"; if(ft.color.startsWith("#")) rgb = ft.color; else rgb = `rgba(${hexToRgb(ft.color)}, ${ft.alpha})`;
+                ctx.fillStyle = rgb; ctx.globalAlpha = ft.alpha; ctx.font = `bold ${ft.size}px Courier New`; ctx.textAlign = "center"; ctx.fillText(ft.text, ft.x, ft.y); ctx.globalAlpha = 1.0;
+            });
+            ctx.restore(); 
+        }
+
+        function hexToRgb(hex) { let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16); return `${r}, ${g}, ${b}`; }
+        function updateUI() { 
+            document.getElementById('score-text').innerText = `SCORE: ${Math.floor(score)}`; 
+            document.getElementById('level-text').innerText = `LVL: ${level}`; 
+            document.getElementById('nuke-text').innerText = `💣: ${nukes}`; 
+            document.getElementById('combo-text').innerText = combo > 1 ? `x${combo} COMBO` : ''; 
+            let fBar = document.getElementById('fuel-bar'); fBar.style.width = fuel + "%"; if (fuel < 20) fBar.style.backgroundColor = "#e03131"; else fBar.style.backgroundColor = "#fcc419"; 
+        }
+
+        function endGame(reason, force = false) {
+            if (!force && !secondChanceUsed) { secondChanceUsed = true; pendingEndReason = reason; isPlaying = false; clearInterval(bgmInterval); document.getElementById('second-chance-screen').style.display = 'flex'; window.parent.postMessage('askChordQuestion', '*'); return; }
+            isPlaying = false; clearInterval(bgmInterval); playExplosion(); document.getElementById('end-title').innerHTML = `CRASHED!<br><span style="font-size:14px; color:#fff;">${reason}</span>`; document.getElementById('game-over').style.display = 'flex';
+        }
+
+        let lastFrameTime = 0; const frameInterval = 1000 / 60;
+        function gameLoop(timestamp) { if (!lastFrameTime) lastFrameTime = timestamp; let dt = timestamp - lastFrameTime; if (dt >= frameInterval) { lastFrameTime = timestamp - (dt % frameInterval); update(); } draw(); if (isPlaying) requestAnimationFrame(gameLoop); }
+
+        document.addEventListener("keydown", (e) => {
+            if([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
+            if(e.key === 'Escape' || e.code === 'Escape') { window.parent.postMessage('closeGameModal', '*'); return; }
+            if (e.code === 'Enter') { e.preventDefault(); const startScreen = document.getElementById('start-screen'); const gameOverScreen = document.getElementById('game-over'); if (startScreen && startScreen.style.display !== 'none') startGame(); else if (!isPlaying && gameOverScreen && gameOverScreen.style.display !== 'none') resetGame(); return; }
+            if(e.code === 'KeyP' || e.key === 'p' || e.key === 'P') { if(!isPlaying) return; isPaused = !isPaused; document.getElementById('pause-screen').style.display = isPaused ? 'flex' : 'none'; return; }
+            if(e.code === 'KeyB' || e.key === 'b' || e.key === 'B') { triggerNuke(); return; }
+            if(isPaused || !isPlaying) return; if (keys.hasOwnProperty(e.code)) keys[e.code] = true;
+            if (e.code === 'Space') { playShoot(); if (score < 1000) { bullets.push({ x: player.x - 2, y: player.y - 18, dx: 0, dy: -8 }); } else if (score < 3000) { bullets.push({ x: player.x - 7, y: player.y - 18, dx: 0, dy: -8 }); bullets.push({ x: player.x + 3, y: player.y - 18, dx: 0, dy: -8 }); } else { bullets.push({ x: player.x - 2, y: player.y - 18, dx: 0, dy: -8 }); bullets.push({ x: player.x - 9, y: player.y - 14, dx: -2, dy: -7 }); bullets.push({ x: player.x + 5, y: player.y - 14, dx: 2, dy: -7 }); } }
+        });
+        document.addEventListener("keyup", (e) => { if (keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+        
+        const mLeft = document.getElementById('m-left'); const mRight = document.getElementById('m-right'); const mFire = document.getElementById('m-fire'); const mNuke = document.getElementById('m-nuke');
+        if(mLeft) {
+            const bindBtn = (btn, key) => { btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; }, {passive: false}); btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; }); };
+            bindBtn(mLeft, 'ArrowLeft'); bindBtn(mRight, 'ArrowRight');
+            mFire.addEventListener('touchstart', (e) => { e.preventDefault(); if(!isPlaying || isPaused) return; playShoot(); if (score < 1000) { bullets.push({ x: player.x - 2, y: player.y - 18, dx: 0, dy: -8 }); } else if (score < 3000) { bullets.push({ x: player.x - 7, y: player.y - 18, dx: 0, dy: -8 }); bullets.push({ x: player.x + 3, y: player.y - 18, dx: 0, dy: -8 }); } else { bullets.push({ x: player.x - 2, y: player.y - 18, dx: 0, dy: -8 }); bullets.push({ x: player.x - 9, y: player.y - 14, dx: -2, dy: -7 }); bullets.push({ x: player.x + 5, y: player.y - 14, dx: 2, dy: -7 }); } }, {passive: false});
+            mNuke.addEventListener('touchstart', (e) => { e.preventDefault(); triggerNuke(); }, {passive: false});
+        }
+        
+        initRiver(); draw();
+    </script>
+</body>
+</html>

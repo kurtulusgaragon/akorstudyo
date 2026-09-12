@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gizlilik Politikası | Gitar Atölyesi</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div class="app-container" style="max-width: 700px; margin-top: 20px;">
+    
+    <header class="header-top-row" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="app-header-brand" style="margin: 0;">
+            <span id="title-tr">🎸 Gizlilik Politikası</span>
+            <span id="title-en" style="display: none;">🎸 Privacy Policy</span>
+        </h2>
+        
+        <!-- Dil Seçici (Ana sayfadaki localStorage ile senkronize çalışır) -->
+        <select id="gizlilik-lang" style="font-size:12px; padding:4px 8px; border-radius:6px; background:var(--surface); color:var(--text); border:1px solid var(--border); font-weight:bold; cursor:pointer;">
+            <option value="tr">🇹🇷 TR</option>
+            <option value="en">🇬🇧 EN</option>
+        </select>
+    </header>
+
+    <div style="background: rgba(0,0,0,0.1); padding: 20px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; line-height: 1.6; color: var(--text); margin-top: 15px;">
+        
+        <!-- TÜRKÇE İÇERİK -->
+        <div id="content-tr">
+            <p><strong>Son Güncelleme:</strong> 12 Eylül 2026</p>
+
+            <p>Gitar Atölyesi (www.akorstudyo.com) olarak kişisel verilerinizin güvenliğine ve gizliliğine büyük önem veriyoruz. Müzik yaparken rahat etmeniz için sistemimiz tamamen şeffaf ve yerel (cihaz tabanlı) çalışacak şekilde tasarlanmıştır.</p>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px;">1. Hangi Verileri Topluyoruz ve Nasıl Saklıyoruz?</h3>
+            <ul style="padding-left: 20px;">
+                <li style="margin-bottom: 8px;"><strong>Stüdyo Kayıtlarınız (Ses Dosyaları):</strong> Tarayıcı üzerinden mikrofonla yaptığınız kayıtlar (WAV/Blob) sadece cihazınızın yerel veritabanında (IndexedDB) tutulur. <b>Sesiniz hiçbir sunucuya yüklenmez, tarafımızca dinlenemez veya paylaşılamaz.</b></li>
+                <li style="margin-bottom: 8px;"><strong>Arayüz Tercihleriniz:</strong> Seçtiğiniz metronom hızı (BPM), karanlık mod ayarı, solak gitar modu ve özel akor dizilimleriniz, siteye tekrar girdiğinizde aynı kalması için cihazınızın önbelleğine (Local Storage) kaydedilir.</li>
+            </ul>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px; margin-top: 15px;">2. Çerezler (Cookies) ve İzleme</h3>
+            <p>Sitemiz, reklam göstermek veya sizi internette takip etmek amacıyla 3. parti pazarlama çerezleri <b>kullanmaz.</b> Yalnızca şu amaçlarla anonim veriler işlenir:</p>
+            <ul style="padding-left: 20px;">
+                <li style="margin-bottom: 8px;">Sitedeki anlık "Aktif Gitarist" sayısını ve toplam beğeni/ziyaretçi istatistiklerini gösterebilmek için Google Firebase altyapısı (anonim olarak) kullanılır.</li>
+                <li style="margin-bottom: 8px;">Çerez uyarısına "Müziğe Devam" dediğinizde, bu uyarıyı size bir daha göstermemek için tarayıcınıza küçük bir onay çerezi bırakılır.</li>
+            </ul>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px; margin-top: 15px;">3. Verilerinizi Nasıl Silebilirsiniz?</h3>
+            <p>Cihazınızda tutulan stüdyo kayıtlarını ve tüm ayar hafızasını silmek isterseniz, stüdyo panelindeki (Ayarlar menüsünde yer alan) <strong>"🧹 Hafızayı & Kayıtları Temizle"</strong> butonuna basmanız yeterlidir. Bu işlem cihazınızdaki tüm verileri kalıcı olarak yok eder.</p>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px; margin-top: 15px;">4. İletişim</h3>
+            <p>Sistem işleyişi, önerileriniz veya gizlilik prensiplerimiz hakkında bir sorunuz olursa bana doğrudan <strong><a href="#" onclick="window.location.href = 'mailto:' + 'garagon_1' + '@' + 'hotmail.com'; return false;" style="color: var(--primary); text-decoration: none; font-weight: bold;">garagon_1@hotmail.com</a></strong> e-posta adresinden ulaşabilirsiniz.</p>
+            
+            <div style="margin-top: 25px; text-align: center;">
+                <a href="./index.html" class="btn btn-primary" style="text-decoration: none; display: inline-block; padding: 10px 20px; font-size: 15px;">🎧 Stüdyoya Geri Dön</a>
+            </div>
+        </div>
+
+        <!-- İNGİLİZCE İÇERİK -->
+        <div id="content-en" style="display: none;">
+            <p><strong>Last Update:</strong> September 12, 2026</p>
+
+            <p>As Guitar Workshop (www.akorstudyo.com), we attach great importance to the security and privacy of your personal data. To make you comfortable while making music, our system is designed to work completely transparently and locally (device-based).</p>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px;">1. What Data Do We Collect and How Do We Store It?</h3>
+            <ul style="padding-left: 20px;">
+                <li style="margin-bottom: 8px;"><strong>Your Studio Recordings (Audio Files):</strong> Recordings you make via the microphone on your browser (WAV/Blob) are only kept in your device's local database (IndexedDB). <b>Your voice is never uploaded to any server, nor can it be listened to or shared by us.</b></li>
+                <li style="margin-bottom: 8px;"><strong>Interface Preferences:</strong> Your selected metronome speed (BPM), dark mode setting, lefty guitar mode, and custom chord progressions are saved in your device's cache (Local Storage) so they remain the same the next time you visit the site.</li>
+            </ul>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px; margin-top: 15px;">2. Cookies and Tracking</h3>
+            <p>Our site <b>does not use</b> 3rd party marketing cookies to show ads or track you online. Anonymous data is processed only for the following purposes:</p>
+            <ul style="padding-left: 20px;">
+                <li style="margin-bottom: 8px;">Google Firebase infrastructure is used (anonymously) to display the current number of "Active Guitarists" and total like/visitor statistics on the site.</li>
+                <li style="margin-bottom: 8px;">When you click "Rock On" on the cookie warning, a small consent cookie is placed in your browser so we don't show you this warning again.</li>
+            </ul>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px; margin-top: 15px;">3. How Can You Delete Your Data?</h3>
+            <p>If you wish to delete the studio recordings and all settings memory stored on your device, simply click the <strong>"🧹 Clear Memory & Tracks"</strong> button in the studio panel (located in the Settings menu). This action permanently destroys all data on your device.</p>
+
+            <h3 style="color: var(--primary); margin-bottom: 5px; margin-top: 15px;">4. Contact</h3>
+            <p>If you have any questions regarding the system operation, suggestions, or our privacy principles, you can contact me directly at <strong><a href="#" onclick="window.location.href = 'mailto:' + 'garagon_1' + '@' + 'hotmail.com'; return false;" style="color: var(--primary); text-decoration: none; font-weight: bold;">garagon_1@hotmail.com</a></strong>.</p>
+            
+            <div style="margin-top: 25px; text-align: center;">
+                <a href="./index.html" class="btn btn-primary" style="text-decoration: none; display: inline-block; padding: 10px 20px; font-size: 15px;">🎧 Back to Studio</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- 1. TEMA KONTROLÜ ---
+    if(localStorage.getItem('gitar_theme') === 'light') { 
+        document.body.classList.remove('dark-mode'); 
+    } else { 
+        document.body.classList.add('dark-mode'); 
+    }
+
+    // --- 2. DİL KONTROLÜ VE SENKRONİZASYONU ---
+    const langSelect = document.getElementById('gizlilik-lang');
+    const contentTr = document.getElementById('content-tr');
+    const contentEn = document.getElementById('content-en');
+    const titleTr = document.getElementById('title-tr');
+    const titleEn = document.getElementById('title-en');
+
+    // Ana siteden gelen dil tercihini oku (yoksa TR yap)
+    const currentLang = localStorage.getItem('gitar_lang') || 'tr';
+    langSelect.value = currentLang;
+    applyLanguage(currentLang);
+
+    // Kullanıcı dili bu sayfadan değiştirirse
+    langSelect.addEventListener('change', (e) => {
+        const selectedLang = e.target.value;
+        localStorage.setItem('gitar_lang', selectedLang); // Ana site de etkilenir
+        applyLanguage(selectedLang);
+    });
+
+    function applyLanguage(lang) {
+        if(lang === 'en') {
+            document.documentElement.lang = "en";
+            contentTr.style.display = "none";
+            titleTr.style.display = "none";
+            contentEn.style.display = "block";
+            titleEn.style.display = "inline";
+        } else {
+            document.documentElement.lang = "tr";
+            contentEn.style.display = "none";
+            titleEn.style.display = "none";
+            contentTr.style.display = "block";
+            titleTr.style.display = "inline";
+        }
+    }
+</script>
+</body>
+</html>

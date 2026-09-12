@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- CSP GÜVENLİK DUVARI BAŞLANGICI -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://*.gstatic.com https://*.googleapis.com https://cdnjs.cloudflare.com https://*.firebasedatabase.app; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.unsplash.com https://api.qrserver.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebaseio.com wss: https://*.googleapis.com https://*.gstatic.com; frame-src 'self' https://*.gstatic.com https://*.firebaseapp.com; media-src 'self' blob:; worker-src 'self' blob:;">
+    <!-- CSP GÜVENLİK DUVARI BİTİŞİ -->
+
+    <title>Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu</title>
+    <style>
+        netlify-badge, #netlify-badge, .netlify-badge, a[href*="netlify.com"] {
+            display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; width: 0 !important; height: 0 !important; z-index: -9999 !important;
+        }
+    </style>
+    
+    <meta name="description" content="AkorStudyo: Ücretsiz online DAW stüdyosu, gitar akort cihazı, akor pusulası, internetsiz (offline) müzik metronomu, solak modu, kapo ve transpoze özellikleriyle interaktif gitar klavyesi.">
+    <meta name="keywords" content="gitar akorları, akor, online daw, ücretsiz daw stüdyosu, offline müzik, tarayıcıdan gitar akort etme, akor pusulası akor bulucu, internetsiz metronom, solak gitar modu, gitar transpoze, kapo hesaplama, çoklu kanal ses kaydı, interaktif klavye, garagon, akorstudyo">
+    <meta name="author" content="Garagon">
+    <link rel="canonical" href="https://www.akorstudyo.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.akorstudyo.com/">
+    <meta property="og:title" content="Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu">
+    <meta property="og:description" content="Garagon altyapısıyla geliştirilen Akorstudyo ile interaktif gitar klavyesi, profesyonel DAW çoklu kanal kayıt ve akıllı akort cihazı.">
+    <meta property="og:image" content="./screenshot-desktop.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu">
+    <meta name="twitter:description" content="Garagon altyapısıyla geliştirilen Akorstudyo ile interaktif gitar klavyesi, profesyonel DAW çoklu kanal kayıt ve akıllı akort cihazı.">
+    <meta name="twitter:image" content="./screenshot-desktop.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Gitar Atölyesi (AkorStudyo)",
+      "url": "https://www.akorstudyo.com/",
+      "description": "Ücretsiz online DAW stüdyosu ile tarayıcı üzerinden ses kaydı alın. İnternetsiz çalışan metronom, gitar akort etme cihazı ve akor pusulası destekli akor bulucu ile müzik yapın.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Web Browser, Windows, macOS, Android, iOS",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "TRY" },
+      "author": { "@type": "Person", "name": "Garagon" }
+    }
+    </script>
+    
+    <meta name="theme-color" content="#228be6">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23228be6'><path d='M12 2C9.5 2 7.5 4 7.5 6.5C7.5 8 8.2 9.3 9.3 10.2C6.8 11.5 5 14.1 5 17.2C5 20.4 7.6 23 10.8 23C13.9 23 16.5 20.4 16.5 17.2C16.5 14.1 14.7 11.5 12.2 10.2C13.3 9.3 14 8 14 6.5C14 4 12 2 12 2ZM10.8 21C8.7 21 7 19.3 7 17.2C7 15.3 8.4 13.7 10.3 13.5L10.8 13.4L11.3 13.5C13.2 13.7 14.6 15.3 14.6 17.2C14.6 19.3 12.9 21 10.8 21ZM12 4C12.8 4 13.5 4.7 13.5 5.5S12.8 7 12 7S10.5 6.3 10.5 5.5S11.2 4 12 4Z'/></svg>">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js" defer></script>
+    <link rel="preload" as="image" href="./bg-click.jpg">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body class="dark-mode">
+
+<div class="app-container">
+    
+    <header class="header-top-row">
+        <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap; width:100%;">
+            <h1 class="app-header-brand" data-i18n="header_title">🎸 Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu</h1>
+            
+            <div style="display:flex; gap:10px; align-items:center; margin-left:auto; flex-wrap:wrap;">
+                <select id="lang-select" style="font-size:12px; padding:4px 8px; border-radius:6px; background:var(--surface); color:var(--text); border:1px solid var(--border); font-weight:bold; cursor:pointer;">
+                    <option value="tr">🇹🇷 TR</option>
+                    <option value="en">🇬🇧 EN</option>
+                </select>
+                
+                <div id="network-status" class="status-indicator status-online" title="Bağlantı Durumu" data-i18n="status_online">🟢 Online</div>
+                <div id="midi-status" class="status-indicator" style="display: flex; background: rgba(0, 0, 0, 0.05); color: var(--text-muted); border-color: var(--border);" title="USB'den MIDI Klavye bağlamanız bekleniyor..." data-i18n="midi_waiting">🎹 MIDI Bekleniyor</div>
+                <div id="active-metro-indicator" class="status-indicator" style="display: none; background: rgba(245, 159, 0, 0.15); color: var(--warning); border-color: rgba(245, 159, 0, 0.3); cursor: pointer;" title="Metronom Çalışıyor! Paneli açmak için tıkla" data-i18n="metro_active">🥁 Metronom Aktif</div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="top-bar">
+        <div>
+            <div class="chord-title-wrapper">
+                <h2 class="chord-title" id="chord-title">Am : La(A) Minör</h2>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <div class="chord-known-name" id="chord-known-name">La(A) Minör</div>
+                </div>
+                <span class="variation-text" id="variation-text">Varyasyon: 1 / 7</span>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <details class="game-menu" style="position:relative;">
+                <summary class="btn" style="font-size:13px; font-weight:bold; padding:6px 12px; list-style:none; cursor:pointer; background:#f59f00; color:white; border:none; box-shadow:0 2px 5px rgba(0,0,0,0.2);">☕ Kahve Molası ▼</summary>
+                <div class="dropdown-content" style="display:flex; flex-direction:column; gap:10px; position:absolute; left:0; top:40px; background:var(--surface); padding:15px; border-radius:8px; border:1px solid var(--border); box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:1000; min-width:180px;">
+                    <button id="btn-play-game" class="btn" style="text-align:left; font-size:13px; background:rgba(245, 159, 0, 0.1); color:var(--warning); border:1px solid var(--warning);">🐍 Müzikal Yılan</button>
+                    <button id="btn-play-pacman" class="btn" style="text-align:left; font-size:13px; background:rgba(252, 196, 25, 0.1); color:#fcc419; border:1px solid #fcc419;">🎶 Nota-Man</button>
+                    <button id="btn-play-riverraid" class="btn" style="text-align:left; font-size:13px; background:rgba(34, 139, 230, 0.1); color:#228be6; border:1px solid #228be6;">✈️ Ritim Raid</button>
+                    <button id="btn-play-tetris" class="btn" style="text-align:left; font-size:13px; background:rgba(121, 80, 242, 0.1); color:#7950f2; border:1px solid #7950f2;">🧱 Müzikal Tetris</button>
+                </div>
+            </details>
+            <details class="settings-menu" style="position:relative;">
+                <summary class="btn btn-primary" style="font-size:13px; font-weight:bold; padding:6px 12px; list-style:none; cursor:pointer;">⚙️ Ayarlar ▼</summary>
+                <div class="toggles dropdown-content" style="display:flex; flex-direction:column; gap:10px; position:absolute; right:0; top:40px; background:var(--surface); padding:15px; border-radius:8px; border:1px solid var(--border); box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:1000;">
+                    <button id="btn-install-app" title="Bilgisayara / Telefona İndir">📱 Uygulamayı Yükle</button>
+                    <button id="btn-focus-mode" class="btn" title="Odak Modu">🧘 Odak</button>
+                    <button id="btn-reset-layout" class="btn" title="Panel dizilimini varsayılana döndür">🧹 Düzeni Sıfırla</button>
+                    <button id="btn-clear-memory" class="btn btn-stop" title="Tüm stüdyo kayıtlarını ve hafızayı temizler">🗑️ Hafızayı & Kayıtları Temizle</button>
+                    <button id="btn-fullscreen" class="btn" title="Tam Ekrana Geç">⛶ Tam Ekran</button>
+                    <button id="btn-shortcuts" class="btn">⌨️ Kısayollar</button>
+                    <select id="wood-theme-select" class="btn" style="width:100%;">
+                        <option value="rosewood" selected>Ahşap: Gül</option>
+                        <option value="maple">Ahşap: Akçaağaç</option>
+                        <option value="ebony">Ahşap: Abanoz</option>
+                    </select>
+                    <label class="switch-container">
+                        <input type="checkbox" id="lefty-toggle">
+                        <div class="switch"></div> Solak
+                    </label>
+                    <label class="switch-container">
+                        <input type="checkbox" id="theme-toggle">
+                        <div class="switch"></div> Gündüz Modu
+                    </label>
+                </div>
+            </details>
+        </div>
+    </nav>
+
+    <main id="sortable-list">
+        
+        <div class="panel-wrapper" id="fretboard-panel">
+            <div class="drag-handle">
+                <span class="handle-title">🎸 Gitar Klavyesi Paneli</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="panel-inner diagram-wrapper">
+                <div class="fretboard" id="fretboard"></div>
+                <div class="fret-numbers" id="fret-numbers"></div>
+            </div>
+        </div>
+
+        <div class="panel-wrapper" id="controls-panel-wrapper">
+            <div class="drag-handle">
+                <span class="handle-title">⚙️ Kontroller & Akor Dizisi</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="panel-inner controls-panel" id="controls-panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed var(--border);">
+                    <span style="font-size:12px; color:var(--text-muted); font-weight:bold;">Akor ve Ritim Kontrolleri</span>
+                    <div style="display:flex; gap:10px;">
+                        <label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--success); cursor:pointer;" title="Akor içindeki notaların (Kök, 3'lü, 5'li vb.) formülünü klavye üzerinde kalıcı olarak gösterir.">
+                            <input type="checkbox" id="anatomy-toggle" onchange="if(window.toggleAnatomyMode) window.toggleAnatomyMode(this.checked)">
+                            <div class="switch" style="width:32px;height:18px;"></div> 🎓 Formül
+                        </label>
+                        <label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--primary); cursor:pointer;">
+                            <input type="checkbox" id="chord-pro-toggle" onchange="toggleChordProMode(this.checked)">
+                            <div class="switch" style="width:32px;height:18px;"></div> 🚀 Pro Mod
+                        </label>
+                    </div>
+                </div>
+
+                <div class="controls-row top-controls" style="flex-direction:column; align-items:flex-start;">
+                    <div class="basic-controls" style="display:flex; flex-wrap:wrap; gap:15px; width:100%; align-items:flex-end;">
+                        <div class="group-col">
+                            <label for="root-select">KÖK NOTA</label>
+                            <select id="root-select"></select>
+                        </div>
+                        <div class="group-col">
+                            <label for="type-select">AKOR TÜRÜ</label>
+                            <select id="type-select">
+                                <option value="Maj">Majör</option>
+                                <option value="Min" selected>Minör (m)</option>
+                                <option value="Dom7">Dominant 7 (7)</option>
+                                <option value="Min7">Minör 7 (m7)</option>
+                                <option value="Maj7" class="pro-chord" style="display:none;">Majör 7 (maj7)</option>
+                                <option value="Sus4" class="pro-chord" style="display:none;">Sus 4 (sus4)</option>
+                                <option value="Sus2" class="pro-chord" style="display:none;">Sus 2 (sus2)</option>
+                                <option value="Dim" class="pro-chord" style="display:none;">Eksiltilmiş (dim)</option>
+                                <option value="Aug" class="pro-chord" style="display:none;">Artırılmış (aug)</option>
+                                <option value="Min7b5" class="pro-chord" style="display:none;">Yarım Dim (m7b5)</option>
+                                <option value="Maj9" class="pro-chord" style="display:none;">Majör 9 (maj9)</option>
+                                <option value="Min9" class="pro-chord" style="display:none;">Minör 9 (m9)</option>
+                                <option value="5" class="pro-chord" style="display:none;">Power (5)</option>
+                                <option value="mMaj7" class="pro-chord" style="display:none;">Minör Majör 7 (mMaj7)</option>
+                                <option value="Add9" class="pro-chord" style="display:none;">Add 9 (add9)</option>
+                                <option value="mAdd9" class="pro-chord" style="display:none;">Minör Add 9 (mAdd9)</option>
+                                <option value="6" class="pro-chord" style="display:none;">Majör 6 (6)</option>
+                                <option value="m6" class="pro-chord" style="display:none;">Minör 6 (m6)</option>
+                                <option value="7b9" class="pro-chord" style="display:none;">Dominant 7b9 (7b9)</option>
+                                <option value="7#9" class="pro-chord" style="display:none;">Dominant 7#9 (7#9)</option>
+                            </select>
+                        </div>
+                        <div class="action-group">
+                            <button class="btn btn-primary" id="btn-play" style="display:flex; align-items:center; gap:5px;" title="Klavye Kısayolu: P veya Enter">▶ Çal <kbd class="kbd-badge">P</kbd></button>
+                            <div id="strum-visualizer" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:rgba(0,0,0,0.05); border-radius:50%; font-size:20px; transition:transform 0.1s ease-out; margin-left:5px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="advanced-controls-wrapper" style="display:none; width:100%; margin-top:5px;">
+                        <div class="advanced-controls" style="display:flex; gap:15px; margin-top:10px; flex-wrap:wrap; padding:15px; background:rgba(0,0,0,0.03); border-radius:8px; border:1px dashed var(--border);">
+                            <div class="group-col">
+                                <label>ENSTRÜMAN TINISI</label>
+                                <select id="instrument-select">
+                                    <option value="acoustic" selected>Akustik Gitar</option>
+                                    <option value="classical">Klasik Gitar (Naylon)</option>
+                                    <option value="electric">Elektro Gitar (Distorsiyon)</option>
+                                </select>
+                            </div>
+                            <div class="group-col">
+                                <label>RİTİM KALIBI</label>
+                                <select id="rhythm-style">
+                                    <option value="down">Düz Vuruş</option>
+                                    <option value="vals">Vals (3/4'lük)</option>
+                                    <option value="mediterranean">Akdeniz (D-D-U-U-D-U)</option>
+                                    <option value="poprock">Pop/Rock (D-D-U-U-D)</option>
+                                    <option value="bossanova">Bossa Nova (Bas + Akor)</option>
+                                    <option value="country">Country (Alternatif Bas)</option>
+                                    <option value="arpeggio">Arpej (Yavaş)</option>
+                                    <option value="funk">Funk (Staccato / Kesik)</option>
+                                    <option value="reggae">Reggae (Off-beat)</option>
+                                    <option value="shuffle">Blues Shuffle</option>
+                                    <option value="flamenco">Flamenco Strum</option>
+                                </select>
+                            </div>
+                            <div class="group-col">
+                                <label>AKOR SESİ</label>
+                                <div style="display: flex; align-items: center; height: 100%; padding-bottom: 5px;">
+                                    <input type="range" id="chord-vol-slider" min="0" max="1" step="0.01" value="0.7" style="width: 70px;">
+                                </div>
+                            </div>
+                            <div style="width: 100%; height: 1px; background: var(--border); margin: 5px 0; opacity: 0.5;"></div>
+                            <div class="group-col">
+                                <label>KAPO AYARI</label>
+                                <div class="transpose-box" style="padding: 2px;">
+                                    <button class="btn" style="padding:4px 12px; border:none;" id="btn-capo-down" title="Kısayol: [-]">-</button>
+                                    <span class="counter-badge" id="capo-val" style="min-width:24px;">0</span>
+                                    <button class="btn" style="padding:4px 12px; border:none;" id="btn-capo-up" title="Kısayol: [+]">+</button>
+                                </div>
+                            </div>
+                            <div class="group-col">
+                                <label>TRANSPOZE (YARI TON)</label>
+                                <div class="transpose-box" style="padding: 2px;">
+                                    <button class="btn" style="padding:4px 12px; border:none;" id="btn-down">-1</button>
+                                    <span class="counter-badge" id="trans-val" style="min-width:24px;">0</span>
+                                    <button class="btn" style="padding:4px 12px; border:none;" id="btn-up">+1</button>
+                                </div>
+                            </div>
+                            <div class="group-col" style="justify-content: flex-end; padding-bottom: 2px;">
+                                <button class="btn btn-reset" id="btn-trans-reset" style="padding: 6px 12px;" title="Klavye Kısayolu: R">Sıfırla <kbd class="kbd-badge">R</kbd></button>
+                            </div>
+                        </div>
+
+                        <div style="width: 100%; height: 1px; background: var(--border); margin: 15px 0 10px 0; opacity: 0.5;"></div>
+                        <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
+                            <span style="font-size:11px; font-weight:bold; color:var(--text-muted); text-transform:uppercase;">🎸 Sanal Pedalboard (Canlı Efektler)</span>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap; padding:10px; background:rgba(0,0,0,0.03); border:1px solid var(--border); border-radius:8px;">
+                                <label class="switch-container" style="background:rgba(250,82,82,0.1); border:1px solid rgba(250,82,82,0.3); padding:6px 12px; border-radius:6px; color:var(--danger);">
+                                    <input type="checkbox" id="pedal-overdrive" onchange="if(window.updatePedals) window.updatePedals()">
+                                    <div class="switch"></div> 💥 Overdrive
+                                </label>
+                                <label class="switch-container" style="background:rgba(34,139,230,0.1); border:1px solid rgba(34,139,230,0.3); padding:6px 12px; border-radius:6px; color:var(--primary);">
+                                    <input type="checkbox" id="pedal-chorus" onchange="if(window.updatePedals) window.updatePedals()">
+                                    <div class="switch"></div> 🌊 Chorus
+                                </label>
+                                <label class="switch-container" style="background:rgba(64,192,87,0.1); border:1px solid rgba(64,192,87,0.3); padding:6px 12px; border-radius:6px; color:var(--success);">
+                                    <input type="checkbox" id="pedal-delay" onchange="if(window.updatePedals) window.updatePedals()">
+                                    <div class="switch"></div> ⏱️ Delay
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-row bottom-controls" style="margin-top:15px;">
+                    <div class="group" id="var-group">
+                        <button class="btn" id="btn-var" title="Klavye Kısayolu: V">🔄 Farklı Pozisyon / Varyasyon <kbd class="kbd-badge">V</kbd></button>
+                    </div>
+                    <button class="btn btn-add" id="btn-add-prog" title="Klavye Kısayolu: A" style="display:none;">+ Kutuya Ekle <kbd class="kbd-badge">A</kbd></button>
+                </div>
+                 
+            </div>
+        </div>
+
+        <div class="panel-wrapper collapsed" id="scale-assistant">
+            <div class="drag-handle">
+                <span class="handle-title">💡 Solo & Gam Asistanı</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="panel-inner scale-assistant">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed var(--border);">
+                    <span style="font-size:12px; color:var(--text-muted); font-weight:bold;">Temel Gam Önerisi</span>
+                    <label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--primary); cursor:pointer;">
+                        <input type="checkbox" id="scale-pro-toggle" onchange="toggleScaleProMode(this.checked)">
+                        <div class="switch" style="width:32px;height:18px;"></div> 🚀 Pro Mod
+                    </label>
+                </div>
+                <div class="scale-assistant-row">
+                    <span id="scale-text">💡 Tavsiye Edilen Solo Gamı: <b>La(A) Minör Pentatonik</b></span>
+                    <button class="scale-btn" id="btn-toggle-scale">🎵 Bu Gamı Klavyede Göster</button>
+                </div>
+                <div id="advanced-scale-wrapper" style="display:none;">
+                    <div class="scale-assistant-row" id="scale-pattern-box" style="display:none; margin-top:8px; background:rgba(0,0,0,0.1); padding:8px; border-radius:6px;">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <label style="font-size:11px; font-weight:bold; color:var(--primary);">Gam Türü (Mod):</label>
+                            <select id="adv-scale-select" style="font-size:12px; padding:4px;">
+                                <option value="auto" selected>Otomatik (Önerilen)</option>
+                                <option value="maj_pent">Majör Pentatonik</option>
+                                <option value="min_pent">Minör Pentatonik</option>
+                                <option value="ionian">Ionian (Majör)</option>
+                                <option value="aeolian">Aeolian (Minör)</option>
+                                <option value="dorian">Dorian</option>
+                                <option value="phrygian">Phrygian</option>
+                                <option value="lydian">Lydian</option>
+                                <option value="mixolydian">Mixolydian</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <label style="font-size:11px; font-weight:bold; color:var(--primary);">Ölçü Kalıbı:</label>
+                            <select id="scale-position-select" style="font-size:12px; padding:4px;">
+                                <option value="pos1" selected>1. Pozisyon (Kutu Kalıbı)</option>
+                                <option value="all">Tüm Klavye Yayılımı</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="scale-details" id="scale-details-text">
+                    🎸 <b>Solo İpucu:</b> Hüzünlü bir hava katmak için kök notada durun.<br><br>👉 <b>Alternatif Gam Önerisi:</b> <a href="#" id="alt-scale-link" style="color:var(--primary); text-decoration:underline; font-weight:bold;">Do(C) Majör Gamına Geçiş Yap</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-wrapper collapsed" id="tools-panel-wrapper">
+            <div class="drag-handle">
+                <span class="handle-title">🎸 Akort Cihazı & Metronom</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="panel-inner tools-panel">
+                <div class="tools-container">
+                    <div class="tuner-panel">
+                        <h4 class="panel-title">🎸 Akıllı Akort Cihazı</h4>
+                        <div class="tuner-display">
+                            <div class="tuner-note" id="tuner-note">--</div>
+                            <div class="tuner-instruction" id="tuner-instruction">Mikrofonu açın ve tellere vurun</div>
+                            <div class="tuner-meter"><div class="tuner-needle" id="tuner-needle"></div></div>
+                        </div>
+                        <div class="tuner-buttons" style="display:flex; justify-content:center; margin-top:10px;">
+                            <button class="btn" style="width:100%;" id="btn-mic">🎙️ Akort Et</button>
+                        </div>
+                    </div>
+                    <div class="metronome-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:1px dashed var(--border);">
+                            <h4 class="panel-title" style="margin:0;">🥁 Davul & Metronom</h4>
+                            <label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--primary); cursor:pointer;">
+                                <input type="checkbox" id="metro-pro-toggle" onchange="toggleMetroProMode(this.checked)">
+                                <div class="switch" style="width:32px;height:18px;"></div> 🚀 Pro Mod
+                            </label>
+                        </div>
+                        <div class="metro-row" style="margin-bottom: 0;">
+                            <button class="btn-metro" id="btn-metro">AÇ</button>
+                            <input type="range" id="bpm-slider" min="40" max="240" value="120" style="flex:1;">
+                            <input type="number" id="bpm-input" class="bpm-input" min="40" max="240" value="120">
+                            <button class="btn" id="btn-tap-tempo" style="padding:4px; min-width:30px;" title="Tap Tempo (Kısayol: T)">👆</button>
+                        </div>
+                        
+                        <div id="advanced-metro-wrapper" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid rgba(0,0,0,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <span style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Davul Stili</span>
+                                <select id="drum-style" style="font-size:11px; padding:4px; background:var(--primary); color:white; border:none; border-radius:4px; font-weight:bold;">
+                                    <option value="click" selected>Metronom (Click)</option>
+                                    <option value="rock">Rock Bateri</option>
+                                    <option value="funk">Funk Groove</option>
+                                    <option value="lofi">Lo-Fi Chill</option>
+                                    <option value="jazz">Jazz Swing</option>
+                                </select>
+                            </div>
+                            <div class="metro-row" style="background: rgba(245, 159, 0, 0.1); padding: 5px 10px; border-radius: 6px; border: 1px dashed var(--warning);">
+                                <label class="switch-container" style="font-size:11px;">
+                                    <input type="checkbox" id="speed-trainer-toggle">
+                                    <div class="switch" style="width:28px;height:16px;"></div> Hız Antrenörü (+5 BPM / 4 Ölçü)
+                                </label>
+                                <span id="trainer-status" style="font-size:10px; color:var(--warning); font-weight:bold;">0/4</span>
+                            </div>
+                            <div class="metro-row" style="margin-bottom:0;">
+                                <span style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform:uppercase;">Ses/Görsel:</span>
+                                <input type="range" id="vol-slider" min="0" max="1" step="0.01" value="0.5" style="flex:1;">
+                                <label class="switch-container" style="font-size:11px; margin-left:10px;" title="Ekranın köşelerinde görsel vuruş efekti yaratır">
+                                    <input type="checkbox" id="visual-metro-toggle">
+                                    <div class="switch" style="width:28px;height:16px;"></div> Görsel
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-wrapper collapsed" id="song-tutor-panel">
+            <div class="drag-handle">
+                <span class="handle-title">🎤 Şarkı Öğren & Akor Dizisi</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="panel-inner" style="position: relative;">
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- 1. ŞARKI ARAMA MODÜLÜ -->
+                    <div style="width: 100%;">
+                        <input type="text" id="sarkiArama" class="estetik-secici" list="sarkiDatalist" placeholder="Şarkı veya sanatçı ara... (Örn: Duman)" autocomplete="off">
+                        <datalist id="sarkiDatalist"></datalist>
+
+                        <div id="estetikPencere" class="pencere-gizli">
+                            <div class="pencere-baslik">
+                                <h3 id="pencereSarkiIsmi" style="color: var(--primary); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Şarkı Adı</h3>
+                            </div>
+                            <div id="pencereIcerik" class="sarki-sozleri-akisi"></div>
+                        </div>
+                    </div>
+
+                    <!-- 2. AKOR DİZİSİ & CANLI PERFORMANS MODÜLÜ -->
+                    <div id="progression-container" style="width: 100%; border-top: 1px dashed var(--border); padding-top: 15px;">
+                        <div class="progression-header" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px;">
+                            <h3 style="width: 100%; margin: 0 0 5px 0;">🎵 Akor Dizisi & Canlı Performans</h3>
+                            <div class="prog-tools" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; width: 100%; justify-content: space-between;">
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
+                                    <button class="btn" id="btn-inspire" style="background:var(--surface); color:var(--text); border:1px solid var(--border);" title="Klavye Kısayolu: I">🎲 İlham Ver <kbd class="kbd-badge">I</kbd></button>                                
+                                    <select id="preset-select" style="font-size:12px; padding:6px; min-width: 150px;">
+                                        <option value="" disabled selected>✨ Şarkı Kalıpları...</option>
+                                        <option value="pop">Pop Hit (Am-F-C-G)</option>
+                                        <option value="pop2">Modern Pop (C-G-Am-F)</option>
+                                        <option value="blues">12-Bar Blues (A7-D7-E7)</option>
+                                        <option value="jazz">Jazz Standardı (Dm7-G7-Cmaj7)</option>
+                                        <option value="rnbsoul">R&B / Soul (Fmaj7-E7-Am7-C7)</option>
+                                        <option value="rock">Klasik Rock (E-D-A-E)</option>
+                                        <option value="anatolian">Anadolu Rock (Dm-C-Bb-Am)</option>
+                                        <option value="flamenco">Flamenko / Endülüs (Am-G-F-E)</option>
+                                        <option value="spanish">İspanyol Dokunuşu (Em-D-C-B7)</option>
+                                        <option value="fifties">50'ler Rock'n Roll (C-Am-F-G)</option>
+                                        <option value="creep">Alternatif Rock (G-B-C-Cm)</option>
+                                    </select>
+                                    <div class="prog-transpose-box">
+                                        <button class="btn" id="btn-prog-down">-1</button>
+                                        <span>TRP</span>
+                                        <span class="counter-badge" id="prog-trans-val" style="margin:0 4px; font-size:12px;">0</span>
+                                        <button class="btn" id="btn-prog-up">+1</button>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
+                                    <label class="switch-container" style="font-size:11px;">
+                                        <input type="checkbox" id="loop-toggle">
+                                        <div class="switch" style="width:28px; height:16px;"></div> Döngü
+                                    </label>
+                                    <button class="btn" id="btn-clear-prog" title="Klavye Kısayolu: C">Temizle <kbd class="kbd-badge">C</kbd></button>
+                                    <button class="btn btn-primary" id="btn-play-prog" title="Klavyeden S tuşu ile başlat">▶ Diziyi Çal <kbd class="kbd-badge" style="pointer-events:none;">S</kbd></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display:flex; gap:6px; margin-top:10px; width:100%; justify-content:flex-end;">
+                            <button class="btn" id="btn-export-tab" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:4px 8px; font-size:11px;">📝 TAB Çıktısı</button>
+                            <button class="btn" id="btn-share-jam" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:4px 8px; font-size:11px;">🔗 Link Kopyala</button>
+                            <button class="btn" id="btn-share-qr" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:4px 8px; font-size:11px;">📱 QR Kod</button>
+                            <button class="btn" id="btn-export-img" style="background:var(--surface); color:var(--text); border:1px solid var(--border); padding:4px 8px; font-size:11px;">🖼️ Kart İndir</button>
+                        </div>
+
+                        <div class="chord-timeline" id="prog-timeline" style="margin-top: 15px;">
+                            <div class="empty-text">Henüz akor eklenmedi. (1, 2, 3... tuşlarıyla canlı çalabilirsin)</div>
+                        </div>
+                    </div>
+                </div> <!-- İç flex konteyner bitişi -->
+
+            </div>
+        </div>
+        <div class="panel-wrapper collapsed" id="studio-panel-wrapper">
+            <div class="drag-handle">
+                <span class="handle-title">🎙️ Pro DAW Stüdyosu (Kayıt)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="panel-inner studio-panel">
+                <div class="studio-panel-inner">
+                    <div class="studio-header">
+                        <h4>🎙️ Pro DAW Stüdyosu (Çoklu Kanal Kayıt)</h4>
+                        <span style="font-size:11px; color:var(--text-muted);">Sınırsız kanal ekleyin. Mix ve düzenlemelerinizi yapın.</span>
+                    </div>
+                    
+                    <div class="studio-controls">
+                        <button class="btn pulse-red" id="btn-rec-track" style="background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3);" title="Kısayol: K">🔴 Kaydet <kbd class="kbd-badge">K</kbd></button>
+                        <button class="btn" id="btn-import-track" style="background:var(--surface); color:var(--text); border:1px solid var(--border);" title="Kısayol: D">📂 Ses Aktar <kbd class="kbd-badge">D</kbd></button>
+                        
+                        <div style="width: 1px; height: 20px; background: var(--border); opacity: 0.3; margin: 0 5px;"></div>
+                        <button class="btn" style="background:var(--surface); color:var(--primary); border:1px dashed var(--primary); font-size: 11px; padding: 6px 10px;" onclick="exportProject()">💾 Projeyi İndir (.akor)</button>
+                        <button class="btn" style="background:var(--surface); color:var(--primary); border:1px dashed var(--primary); font-size: 11px; padding: 6px 10px;" onclick="document.getElementById('project-file-input').click()">📂 Proje Yükle</button>
+                        <input type="file" id="project-file-input" accept=".akor" style="display:none" onchange="importProject(event)">
+
+                        <button class="btn btn-add" id="btn-undo-delete" style="display:none; background:#f59f00; border:none; color:white;" onclick="undoDelete()">↩️ Geri Al</button>
+                        <input type="file" id="track-file-input" accept="audio/*" style="display:none">
+                        <select id="backing-track-select" style="padding: 6px; font-size:12px; font-weight:bold; border-radius:6px; border:1px solid var(--border); background:rgba(34, 139, 230, 0.1); color:var(--primary); cursor:pointer;">
+                            <option value="" disabled selected>🥁 Hazır Altyapı Ekle</option>
+                            <option value="./blues-backing.mp3">🎸 12-Bar Blues (A)</option>
+                            <option value="./rock-backing.mp3">🤘 Klasik Rock (E)</option>
+                            <option value="./lofi-backing.mp3">☕ Lo-Fi Chill Beat</option>
+                        </select>
+                        <label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--primary); cursor:pointer; margin-left:auto;">
+                            <input type="checkbox" id="monitor-toggle" onchange="toggleLiveMonitor(this.checked)">
+                            <div class="switch" style="width:32px;height:18px;"></div> 🎧 Monitör
+                        </label>
+                    </div>
+
+                    <div style="font-size: 11px; color: var(--text-muted); background: rgba(0,0,0,0.1); padding: 8px 12px; border-radius: 6px; margin-top: 5px; border: 1px dashed var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">🎧</span>
+                        <span><b>Pro İpucu:</b> Tertemiz ve güçlü bir ses elde etmek için mutlaka <b>kulaklık</b> kullanın veya enstrümanınızı <b>ses kartı/jak</b> ile bağlayın.</span>
+                    </div>
+                    
+                    <div class="meter-wrapper"><div id="rec-meter"></div></div>
+
+                    <div class="batch-actions" id="batch-actions" style="display:none; background: rgba(0,0,0,0.1); border: 1px solid var(--border); padding: 12px; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-right:auto;">
+                            <label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--primary);">
+                                <input type="checkbox" id="select-all-tracks" onchange="toggleSelectAllTracks(this.checked)">
+                                <span style="color:var(--text); font-weight:bold;">Tümünü Seç</span>
+                            </label>
+                        </div>
+                        <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); border:1px solid var(--border); color:var(--text);" onclick="playSelectedTracks()">▶ Birlikte Çal</button>
+                        <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); border:1px solid var(--border); color:var(--text);" onclick="stopSelectedTracks()" title="Kısa duraklatma yapar. Başa sarmak için tekrar tıklayın.">⏹ Durdur / Başa Sar</button>
+                        <div style="width: 1px; height: 20px; background: var(--border); opacity: 0.3; margin: 0 2px;"></div>
+                        <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); border:1px solid var(--border); color:var(--text);" onclick="mergeSelectedTracks()" title="Seçili kanalları tek bir kanal haline getirir">🔗 Birleştir</button>
+                        <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); border:1px solid var(--border); color:var(--text);" onclick="mixdownProject()" title="Miksi ham haliyle mp3 yapar">🎛️ Mixdown</button>
+                        <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); border:1px solid var(--border); color:var(--warning);" onclick="masterProject()" title="Sesi radyo kalitesine (Spotify) parlatıp mp3 olarak indirir">💿 Radyo Mastering</button>
+                        <div style="width: 1px; height: 20px; background: var(--border); opacity: 0.3; margin: 0 2px;"></div>
+                        <button class="btn" style="padding:4px 10px; font-size:11px; background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3);" onclick="deleteSelectedTracks()">🗑️ Sil</button>
+                    </div>
+                    <div class="track-list" id="track-list">
+                        <div class="empty-text" style="text-align:left;">Kayıtlı kanal yok. Yeni bir kayıt başlatın.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+
+    <section id="about-section" class="seo-text-section" style="background: rgba(0, 0, 0, 0.05); padding: 20px; border-radius: 8px; margin-top: 25px; border: 1px solid var(--border); font-size: 13px; line-height: 1.6; color: var(--text-muted);">
+        <h2 style="font-size: 16px; color: var(--text); margin-top: 0; font-weight: bold; margin-bottom: 10px;">Gitar Atölyesi ve AkorStudyo Hakkında</h2>
+        <p style="margin-top: 0; margin-bottom: 15px;"><b>Gitar Atölyesi (AkorStudyo)</b>, müzisyenler için tasarlanmış <strong>ücretsiz online DAW stüdyosu</strong> ve kapsamlı bir eğitim platformudur. Herhangi bir program kurmadan <strong>tarayıcı üzerinden gitar akort etme</strong> işlemini gerçekleştirebilir, <strong>internetsiz çalışan metronom</strong> ile ritim çalışabilirsiniz. Amacımız, <strong>akor pusulası</strong> asistanımız ve interaktif klavyemiz sayesinde müzikal fikirlerinizi anında çoklu kanal olarak kaydetmenizi sağlamaktır.</p>
+        
+        <details class="seo-text-section" style="background: var(--surface); padding: 15px; border-radius: 6px; border: 1px solid var(--border);">
+            <summary style="font-size: 14px; color: var(--primary); font-weight: bold; cursor: pointer; outline: none; list-style: none;">
+                🎵 Öne Çıkan Özellikleri Keşfet
+                <span class="accordion-icon" style="float:right; color:var(--text);">▼</span>
+            </summary>
+            <div style="margin-top: 15px;">
+                <ul style="margin: 0; padding-left: 20px;">
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 0s;" onclick="showFeature('btn-focus-mode')">✨ Odak Modu (Canlı Demo):</strong> Ekranda sadece çalıştığınız paneller kalsın! Tek tuşla dikkat dağıtıcı menüleri gizleyerek müziğe odaklanın.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 1.5s;" onclick="showFeature('advanced-controls-wrapper')">✨ Tını, Ritim ve Kapo (Canlı Demo):</strong> Akustik, Elektro veya Klasik gitar tınıları seçin, farklı ritim kalıpları (Vals, Pop vb.) uygulayın ve Kapo kullanın.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 3s;" onclick="showFeature('btn-inspire')">✨ İlham Ver (Canlı Demo):</strong> Nereden başlayacağınızı bilmiyorsanız, akor pusulası rastgele ve uyumlu harika akor kalıpları üretir.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 4.5s;" onclick="showFeature('btn-toggle-scale')">✨ Gamı Klavyede Göster (Canlı Demo):</strong> Seçtiğiniz akora uygun pentatonik veya majör gam formüllerini anında gitar klavyesi üzerine yansıtın.</li>
+                
+                <!-- YENİ EKLENEN MADDE -->
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 6s;" onclick="showFeature('song-tutor-panel')">✨ Şarkı Öğren (Canlı Demo):</strong> Çevrimdışı veritabanı ile yüzlerce popüler şarkının sözlerini ve akorlarını interaktif klavyede çalarak öğrenin.</li>
+                
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 7.5s;" onclick="showFeature('ai-suggestion-box')">✨ Akor Pusulası:</strong> Çaldığınız son akora göre "hangi akorlar harika gider" önerilerini anında alın.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 9s;" onclick="showFeature('btn-share-qr')">✨ QR Kod ile Anında Paylaşım:</strong> Akor dizilerini ve metronomu tek tıkla QR koda çevirip saniyeler içinde paylaşın.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 10.5s;" onclick="showFeature('studio-panel-wrapper')">✨ Pro DAW Stüdyosu (Çoklu Kanal Kayıt):</strong> Sınırsız kanal açarak tarayıcı üzerinden mikrofonla ses kaydı yapın, altyapılar ekleyin.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 12s;" onclick="showFeature('tools-panel-wrapper')">✨ Akıllı Akort Cihazı (Tuner):</strong> Gitarınızı en hassas şekilde akort edin. Mikrofon erişimi ile çalışan akort cihazımız her an yanınızda.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 13.5s;" onclick="showFeature('btn-reset-layout')">✨ Özelleştirilebilir Paneller:</strong> Arayüzü sürükle-bırak ile düzenleyin. Karmaşa hissederseniz <em>"Düzeni Sıfırla"</em> ile başa dönün.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 15s;" onclick="showFeature('controls-panel-wrapper')">✨ Kaldığın Yerden Devam Et (Akıllı Hafıza):</strong> Seçtiğiniz akor dizisi, ritim, BPM ve panel sıralamalarınız kaydedilir.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 16.5s;" onclick="showFeature('network-status')">✨ İnternetsiz (Offline) Kullanım (Canlı Demo):</strong> Cihazınızda internet koptuğunda sistem uyarı verir ve kayıpsız çalışmaya devam eder.</li>
+                <li style="margin-bottom: 5px;"><strong class="magic-link" style="animation-delay: 18s;" onclick="showFeature('drum-style')">✨ Görsel Metronom ve Bateri (Canlı Demo):</strong> Tıklama sesini Rock Bateri veya Lo-Fi ile değiştirin, görsel efektlerle ritmi takip edin.</li>
+                <li style="margin-bottom: 0;"><strong class="magic-link" style="animation-delay: 19.5s;" onclick="showFeature('fretboard-panel')">✨ Solak Gitarist Desteği (Canlı Demo):</strong> Solak müzisyenler için tek tuşla tüm klavye ve akor diyagramlarını ters çevirebilirsiniz.</li>
+                </ul>
+        </div>
+        </details>
+    </section>
+
+    <aside class="feedback-section" style="display: none;">
+        <div class="feedback-stats">
+            <div>Bugüne Kadar Ziyaret Eden: <span id="total-visitors">0</span></div>
+            <div>Şu An Aktif Gitarist: <span id="active-visitors">1</span></div>
+        </div>
+        <p style="margin:5px 0;">Programın gelişmesi için fikir ve önerilerinize ihtiyacımız var. Bizi destekleyin!</p>
+        <div class="social-stats">
+            <button id="btn-like" class="btn-social">👍 <span id="like-count">0</span></button>
+            <button id="btn-dislike" class="btn-social">👎 <span id="dislike-count">0</span></button>
+        </div>
+    </aside>
+    
+    <footer class="footer-brand">Powered GARAGON</footer>
+    <button id="btn-scroll-top" title="Başa Dön">↑ Yukarı Çık</button>
+
+</div> <!-- APP CONTAINER BİTİŞİ -->
+
+<div id="tutor-box" style="display:none; position:fixed; bottom:25px; left:50%; transform:translateX(-50%); background:var(--surface); border:2px solid var(--success); padding:15px 25px; border-radius:12px; z-index:10000; box-shadow:0 10px 40px rgba(0,0,0,0.6); text-align:center; min-width: 320px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+    <h3 style="margin:0 0 10px 0; color:var(--success); font-size:16px;">🎓 İnteraktif Parça Öğreticisi</h3>
+    <p id="tutor-msg" style="font-size:14px; margin:0 0 15px 0; color:var(--text); line-height: 1.5;"></p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button class="btn" id="btn-tutor-exit" style="background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3);">Çıkış</button>
+        <button class="btn btn-add" id="btn-tutor-next" style="font-weight:bold; padding:8px 20px;">Seslendir & İlerle ▶</button>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<div class="modal-overlay" id="game-modal">
+    <div class="modal-content" style="padding: 10px; max-width: 440px; text-align: center; background: #121212;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; padding: 0 10px;">
+            <h3 style="margin:0; font-size:16px; color:var(--primary);">Oyun Molası</h3>
+            <button class="btn" id="btn-close-game" style="padding:4px 8px; background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3);" aria-label="Oyunu Kapat">X</button>
+        </div>
+        <iframe id="game-iframe" title="Retro Oyun Ekranı" src="" style="width: 100%; max-width: 400px; height: 80vh; max-height: 520px; border: none; border-radius: 8px;"></iframe>
+    </div>
+</div>
+
+<div class="modal-overlay" id="shortcuts-modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:18px;">⌨️ Klavye Kısayolları</h3>
+            <button class="btn" id="btn-close-modal" style="padding:4px 8px; background:var(--danger); color:white; border:none;">X</button>
+        </div>
+        <ul class="shortcut-list">
+            <li><span>Son İşlemi Geri Al (Sil / Kırp)</span> <div><kbd class="kbd-badge">Ctrl</kbd> + <kbd class="kbd-badge">Z</kbd></div></li>
+            <li><span>Tap Tempo (Ritmi Elle Gir)</span> <kbd class="kbd-badge">T</kbd></li>
+            <li><span>Akoru Çal / Tekrarla</span> <div><kbd class="kbd-badge">P</kbd> <span style="font-weight:normal; font-size:11px; margin:0 3px;">veya</span> <kbd class="kbd-badge">Enter</kbd></div></li>
+            <li><span>Diziyi Çal / Durdur</span> <kbd class="kbd-badge">S</kbd></li>
+            <li><span>Stüdyo: Birlikte Çal / Durdur</span> <kbd class="kbd-badge">Space</kbd></li>
+            <li><span>Kanal Kaydını Başlat / Durdur</span> <kbd class="kbd-badge">K</kbd></li>
+            <li><span>Metronomu Aç / Kapat</span> <kbd class="kbd-badge">M</kbd></li>
+            <li><span>Odak Modu (Aç / Kapat)</span> <kbd class="kbd-badge">F</kbd></li>
+            <li><span>Ses Dosyası İçe Aktar</span> <kbd class="kbd-badge">D</kbd></li>
+            <li><span>Akoru Kutuya Ekle</span> <kbd class="kbd-badge">A</kbd></li>
+            <li><span>Farklı Pozisyon/Varyasyon</span> <kbd class="kbd-badge">V</kbd></li>
+            <li><span>Kapoyu Artır / Azalt</span> <div><kbd class="kbd-badge">+</kbd> <span style="font-weight:normal; font-size:11px; margin:0 3px;">/</span> <kbd class="kbd-badge">-</kbd></div></li>
+            <li><span>Transpozisyonu & Kapoyu Sıfırla</span> <kbd class="kbd-badge">R</kbd></li>
+            <li><span>Akor Dizisini Temizle</span> <kbd class="kbd-badge">C</kbd></li>
+            <li><span>Rastgele Akor Dizisi (İlham)</span> <kbd class="kbd-badge">I</kbd></li>
+            <li><span>Kutudaki Akoru Anında Çal</span> <div><kbd class="kbd-badge">1</kbd> .. <kbd class="kbd-badge">9</kbd></div></li>
+        </ul>
+    </div>
+</div>
+
+<!-- GARAGON KARŞILAMA MESAJI -->
+<div id="welcome-toast" class="welcome-toast-hidden">
+    <div style="position: absolute; top: -25px; left: 20px; font-size: 40px; animation: bounceIn 1s forwards;">👋</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <strong style="color: var(--primary); font-size: 14px;">Selam! 🎸</strong>
+        <button id="welcome-toast-close" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; font-weight: bold; padding: 0;">Geç ✕</button>
+    </div>
+    <p style="margin: 0 0 10px 0; font-size: 12px; line-height: 1.5; color: var(--text);">Eline gitarını al ve müziğine odaklan. Akor Pusulası, Solo Asistanı, Akort Aleti ve Pro DAW Stüdyosu... 'Pro' etiketleri seni endişelendirmesin; burası her zaman ücretsiz, reklamsız ve üyeliksiz kalacak.</p>
+    <p style="margin: 0; font-size: 12px; line-height: 1.5; color: var(--text);">Sen yeter ki keşfet. Eğer müziğinle ön plana çıkarsan, bir gün bizden bahset. Bu bizim tüm emeğimizin karşılığıdır.</p>
+    <div class="welcome-toast-progress"></div>
+</div>
+
+<div id="cute-cookie-banner" class="cute-banner-hidden">
+    <div class="cute-banner-icon">🎸</div>
+    <div class="cute-banner-content">
+        <p>Selam! Yaptığın harika akor dizilerini ve stüdyo ayarlarını cihazında saklıyorum. Merak etme, verilerin stüdyo dışına çıkmaz. Detaylar için <a href="./gizlilik.html">Gizlilik Politikamıza</a> göz atabilirsin.</p>
+        <button id="btn-cute-accept" class="btn btn-primary">Müziğe Devam 🤘</button>
+    </div>
+</div>
+
+<script src="./akor_db.js" defer></script>
+<script src="./firebase-sync.js" defer></script>
+<script src="./audio-engine.js" defer></script>
+<script src="./guitar-math.js" defer></script>
+<script src="./lang.js" defer></script>
+<script src="./app.js" defer></script>
+
+<style>
+    netlify-badge, #netlify-badge, .netlify-badge, a[href*="netlify.com"] { 
+        display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; 
+    }
+</style>
+<script>
+    document.querySelectorAll('.game-menu button, [id^="btn-play-"]:not(#btn-play-prog):not(#btn-play)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (typeof isMetroOn !== 'undefined' && isMetroOn) {
+                let metroBtn = document.getElementById('btn-metro');
+                if (metroBtn && metroBtn.classList.contains('active')) metroBtn.click();
+            }
+            if (typeof isPlayingProgression !== 'undefined' && isPlayingProgression) {
+                let progBtn = document.getElementById('btn-play-prog');
+                if (progBtn && progBtn.classList.contains('btn-stop')) progBtn.click();
+            }
+            if (typeof stopSelectedTracks === 'function') stopSelectedTracks();
+
+            let iframe = document.getElementById('game-iframe');
+            if (iframe && iframe.contentWindow) {
+                try { iframe.contentWindow.focus(); } catch(e) {}
+            }
+        });
+    });
+</script>
+</body>
+</html>
