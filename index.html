@@ -411,7 +411,10 @@
                             <div class="pencere-baslik">
                                 <h3 id="pencereSarkiIsmi" style="color: var(--primary); margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Şarkı Adı</h3>
                             </div>
-                            <div id="pencereIcerik" class="sarki-sozleri-akisi"></div>
+                            <div id="pencere-govde" style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                                <div id="pencereIcerik" class="sarki-sozleri-akisi" style="flex: 1; overflow-x: auto; min-width: 280px;"></div>
+                                <div id="pencere-akor-alani" style="display: none; flex-direction: column; gap: 10px; padding-right: 5px; min-width: 150px;"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -659,6 +662,7 @@
 <script src="./audio-engine.js" defer></script>
 <script src="./guitar-math.js" defer></script>
 <script src="./lang.js" defer></script>
+<script src="./lame.min.js" defer></script>
 <script src="./app.js" defer></script>
 
 <style>

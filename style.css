@@ -592,6 +592,7 @@ details.advanced-controls-wrapper > summary::-webkit-details-marker { display: n
     min-width: 140px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     vertical-align: top;
+    flex-shrink: 0;
 }
 .mini-chord-title {
     font-size: 13px;
@@ -1028,6 +1029,55 @@ details summary::-webkit-details-marker {
         margin: 0 !important;
     }
     
+    #pencere-govde {
+        display: flex !important;
+        gap: 20px !important;
+        align-items: flex-start !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    #pencere-akor-alani {
+        display: flex !important;
+        flex-direction: column !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    .mini-chord-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        background: transparent !important;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+    }
+    
+    .mini-fretboard {
+        background: transparent !important; 
+        border: 2px solid #333 !important;
+        border-left: 6px solid #666 !important; 
+    }
+    
+    .mini-string-line {
+        background: transparent !important; 
+        border-top: 1.5px solid #444 !important;
+        height: 0 !important;
+        opacity: 1 !important;
+    }
+    
+    .mini-fret-line {
+        background: transparent !important; 
+        border-left: 1.5px solid #aaa !important;
+        width: 0 !important;
+        opacity: 1 !important;
+    }
+    
+    .mini-dot {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background-color: #228be6 !important; 
+        color: white !important;
+    }
+    
     .sarki-sozleri-akisi {
         /* YENİ: Ekrandaki font boyutu, satır aralığı ve font tipini BİREBİR kilitliyoruz. 
            Böylece piksel bazlı kaydırmalar kağıtta şaşmaz. */
@@ -1134,3 +1184,36 @@ details summary::-webkit-details-marker {
 .welcome-toast-progress { position: absolute; bottom: 0; left: 0; height: 4px; background-color: var(--primary); width: 100%; transform-origin: left; border-radius: 0 0 16px 16px; }
 .toast-show .welcome-toast-progress { animation: progressShrink 15s linear forwards; }
 @keyframes progressShrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+/* EFSANEVİ MESAJ (TOAST) BİLEŞENİ */
+#legend-toast {
+    visibility: hidden;
+    min-width: 280px;
+    max-width: 400px;
+    background-color: #1a1a1a;
+    color: #f1f1f1;
+    text-align: left;
+    border-radius: 8px;
+    padding: 16px;
+    position: fixed;
+    z-index: 9999;
+    bottom: 20px;
+    right: 20px;
+    font-size: 14px;
+    box-shadow: 0px 4px 20px rgba(0,0,0,0.6);
+    border-left: 4px solid #ff9800; /* Rock & Roll Turuncusu vurgu */
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out, bottom 0.4s ease-in-out;
+}
+
+#legend-toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 40px;
+}
+
+#legend-toast h4 {
+    margin: 0 0 8px 0;
+    color: #ff9800;
+    font-family: inherit;
+    font-size: 16px;
+}

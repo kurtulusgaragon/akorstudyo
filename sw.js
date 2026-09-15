@@ -1,5 +1,5 @@
 // DİKKAT: Her güncellemede bu numarayı artırın (Örn: v2.0.0, v2.0.1)
-const CACHE_NAME = 'gitar-atolyesi-v2.3.12'; 
+const CACHE_NAME = 'gitar-atolyesi-v3.1.4'; 
 
 // Çevrimdışı (offline) çalışabilmesi için cihazda tutulacak dosyalar
 const ASSETS_TO_CACHE = [
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
     './style.css',
     './lang.js',
     './app.js',
+    './lame.min.js',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
@@ -23,8 +24,7 @@ const ASSETS_TO_CACHE = [
     './blues-backing.mp3',
     './rock-backing.mp3',
     './lofi-backing.mp3',
-    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js'
+    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ];
 
 // 1. KURULUM: İner inmez beklemeden aktif ol!

@@ -17,10 +17,10 @@ if ('serviceWorker' in navigator) {
         if (!refreshing) {
             refreshing = true;
             if(window.showToast) {
-                const updateToast = window.showToast("🚀 YENİ SÜRÜM HAZIR! Güncellemek İçin Buraya Tıklayın.", 0);
+                const updateToast = window.showToast(window.appLang === 'en' ? "🚀 NEW VERSION READY! Click here to update." : "🚀 YENİ SÜRÜM HAZIR! Güncellemek İçin Buraya Tıklayın.", 0);
                 if (updateToast) {
                     updateToast.style.cursor = 'pointer'; updateToast.style.border = '2px solid var(--success)'; updateToast.style.boxShadow = '0 0 20px rgba(64, 192, 87, 0.6)';
-                    updateToast.addEventListener('click', () => { updateToast.innerText = "⏳ Güncelleniyor..."; window.location.reload(true); }); 
+                    updateToast.addEventListener('click', () => { updateToast.innerText = window.appLang === 'en' ? "⏳ Updating..." : "⏳ Güncelleniyor..."; window.location.reload(true); }); 
                 }
             }
         }
@@ -117,29 +117,39 @@ window.addEventListener('DOMContentLoaded', () => {
     renderProgression();
 
     const bgImages = { 'click': "url('./bg-click.jpg')", 'rock': "url('./bg-rock.jpg')", 'funk': "url('./bg-funk.jpg')", 'lofi': "url('./bg-lofi.jpg')", 'jazz': "url('https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?q=80&w=2089&auto=format&fit=crop')" };
-    if(window.domCache.drumStyle) { window.domCache.drumStyle.addEventListener('change', (e) => { document.body.style.backgroundImage = bgImages[e.target.value] || bgImages['click']; }); }
+    if(window.domCache.drumStyle) { 
+        window.domCache.drumStyle.addEventListener('change', (e) => { 
+            document.body.style.backgroundImage = bgImages[e.target.value] || bgImages['click']; 
+            if (e.target.value !== 'click' && !window.bonhamMessageShown) {
+                const title = window.appLang === 'en' ? "Drop the Mechanics, Catch the Groove" : "Mekaniği Bırak, Groove'u Yakala";
+                const msg = window.appLang === 'en' ? "John Bonham or James Brown had a soul (groove) in their rhythms. Get a virtual drummer behind you and jam like you're in the studio!" : "Led Zeppelin'den John Bonham veya James Brown'ın ritimlerinde bir ruh (groove) vardı. Sadece mekanik bir tık sesine uymak yerine, arkana sanal bir baterist al ve stüdyodaymış gibi devleş!";
+                showLegendMessage(title, msg);
+                window.bonhamMessageShown = true;
+            }
+        }); 
+    }
 
     const btnExportTab = document.getElementById('btn-export-tab');
     if(btnExportTab) {
         btnExportTab.addEventListener('click', () => {
-            if (progression.length === 0) return alert('Önce akor dizisine akor eklemelisin!');
+            if (progression.length === 0) return alert(window.appLang === 'en' ? 'Add chords to the progression first!' : 'Önce akor dizisine akor eklemelisin!');
             let tabStrings = ['e|', 'B|', 'G|', 'D|', 'A|', 'E|'];
             progression.forEach(prog => {
                 let shape = prog.shape || window.generateVariations(prog.root, prog.type)[0]; if(!shape) return;
                 for(let i = 0; i < 6; i++) { let sd = shape[5-i]; let fret = (sd && sd.fret !== undefined && sd.fret !== 'x') ? (sd.fret === 0 ? capoFret : sd.fret + capoFret) : 'x'; let strVal = fret.toString(); tabStrings[i] += `-${strVal.length === 1 ? strVal+'-' : strVal}-|`; }
             });
-            let finalTab = tabStrings.join('\n'); let tabHeader = (typeof isLefty !== 'undefined' && isLefty) ? "*(Not: Solak mod aktif ancak TAB evrensel okunabilirlik için standart düzende oluşturulmuştur)*\n\n" : "";
-            if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(tabHeader + finalTab).then(() => { alert("🎸 TAB Panoya Kopyalandı!\n\n" + tabHeader + finalTab); }).catch(() => alert(tabHeader + finalTab)); } else { alert(tabHeader + finalTab); }
+            let finalTab = tabStrings.join('\n'); let tabHeader = (typeof isLefty !== 'undefined' && isLefty) ? (window.appLang === 'en' ? "*(Note: Lefty mode is active but TAB is generated in standard layout for universal readability)*\n\n" : "*(Not: Solak mod aktif ancak TAB evrensel okunabilirlik için standart düzende oluşturulmuştur)*\n\n") : "";
+            if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(tabHeader + finalTab).then(() => { alert((window.appLang === 'en' ? "🎸 TAB Copied to Clipboard!\n\n" : "🎸 TAB Panoya Kopyalandı!\n\n") + tabHeader + finalTab); }).catch(() => alert(tabHeader + finalTab)); } else { alert(tabHeader + finalTab); }
         });
     }
 
     const btnShareJam = document.getElementById('btn-share-jam');
     if(btnShareJam) {
         btnShareJam.addEventListener('click', () => {
-            if (progression.length === 0) return alert('Paylaşacak bir akor dizisi yok!');
+            if (progression.length === 0) return alert(window.appLang === 'en' ? 'No chord progression to share!' : 'Paylaşacak bir akor dizisi yok!');
             let jamData = { p: progression.map(p => ({r: p.root, t: p.type})), b: window.bpm, s: window.domCache.rhythmStyle ? window.domCache.rhythmStyle.value : 'down' };
             let base64 = btoa(JSON.stringify(jamData)); let url = new URL(window.location.href); url.searchParams.set('jam', base64);
-            if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url.href).then(() => { alert("🔗 Jam Linki Panoya Kopyalandı!\n\n" + url.href); }).catch(() => alert(url.href)); } else { alert(url.href); }
+            if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url.href).then(() => { alert((window.appLang === 'en' ? "🔗 Jam Link Copied!\n\n" : "🔗 Jam Linki Panoya Kopyalandı!\n\n") + url.href); }).catch(() => alert(url.href)); } else { alert(url.href); }
         });
     }
 });
@@ -165,18 +175,18 @@ function updateScaleAssistant() {
     const isMin = currentType === "Min" || currentType === "Min7" || currentType === "Sus2" || currentType === "Dim" || currentType === "Min7b5" || currentType === "Min9" || currentType === "mMaj7" || currentType === "mAdd9" || currentType === "m6" || currentType.includes("m");
     let advMode = advScaleSelect ? advScaleSelect.value : 'auto'; let scaleName = "";
     
-    if(advMode === 'auto') { scaleName = isMin ? `${rootNameTr} Minör Pentatonik` : `${rootNameTr} Majör Pentatonik`; } 
-    else { const names = { 'maj_pent': 'Majör Pentatonik', 'min_pent': 'Minör Pentatonik', 'ionian': 'Ionian (Majör)', 'aeolian': 'Aeolian (Minör)', 'dorian': 'Dorian', 'phrygian': 'Phrygian', 'lydian': 'Lydian', 'mixolydian': 'Mixolydian' }; scaleName = `${rootNameTr} ${names[advMode]}`; }
+    if(advMode === 'auto') { scaleName = isMin ? (window.appLang === 'en' ? `${rootNoteEng} Minor Pentatonic` : `${rootNameTr} Minör Pentatonik`) : (window.appLang === 'en' ? `${rootNoteEng} Major Pentatonic` : `${rootNameTr} Majör Pentatonik`); } 
+    else { const names = window.appLang === 'en' ? { 'maj_pent': 'Major Pentatonic', 'min_pent': 'Minor Pentatonic', 'ionian': 'Ionian (Major)', 'aeolian': 'Aeolian (Minor)', 'dorian': 'Dorian', 'phrygian': 'Phrygian', 'lydian': 'Lydian', 'mixolydian': 'Mixolydian' } : { 'maj_pent': 'Majör Pentatonik', 'min_pent': 'Minör Pentatonik', 'ionian': 'Ionian (Majör)', 'aeolian': 'Aeolian (Minör)', 'dorian': 'Dorian', 'phrygian': 'Phrygian', 'lydian': 'Lydian', 'mixolydian': 'Mixolydian' }; scaleName = `${rootNameTr} ${names[advMode]}`; }
     
     let tipHtml = "";
-    if (isMin) { tipHtml += `🎸 <b>Solo İpucu:</b> Hüzünlü ve derin bir hava katmak için <b>${rootNameTr}</b> (Kök) notasında uzun durun.`; } else { tipHtml += `🎸 <b>Solo İpucu:</b> Neşeli bir hissiyat için gamın Majör 3'lüsünü vurgulayın.`; }
+    if (isMin) { tipHtml += window.appLang === 'en' ? `🎸 <b>Solo Tip:</b> Pause on the <b>${rootNoteEng}</b> (Root) note to add a sad and deep vibe.` : `🎸 <b>Solo İpucu:</b> Hüzünlü ve derin bir hava katmak için <b>${rootNameTr}</b> (Kök) notasında uzun durun.`; } else { tipHtml += window.appLang === 'en' ? `🎸 <b>Solo Tip:</b> Emphasize the Major 3rd of the scale for a joyful feeling.` : `🎸 <b>Solo İpucu:</b> Neşeli bir hissiyat için gamın Majör 3'lüsünü vurgulayın.`; }
 
-    let altRootIndex = isMin ? (currentRootIndex + 3) % 12 : (currentRootIndex - 3 + 12) % 12; let altScaleType = isMin ? "Maj" : "Min"; const effectiveAltRootIndex = (altRootIndex + capoFret) % 12; let altScaleName = `${window.trNotes[window.notes[effectiveAltRootIndex]]} ${altScaleType === "Maj" ? "Majör" : "Minör"}`;
+    let altRootIndex = isMin ? (currentRootIndex + 3) % 12 : (currentRootIndex - 3 + 12) % 12; let altScaleType = isMin ? "Maj" : "Min"; const effectiveAltRootIndex = (altRootIndex + capoFret) % 12; let altScaleName = `${window.trNotes[window.notes[effectiveAltRootIndex]]} ${altScaleType === "Maj" ? (window.appLang === 'en' ? "Major" : "Majör") : (window.appLang === 'en' ? "Minor" : "Minör")}`;
 
-    if(advMode === 'auto') { tipHtml += `<br><br>👉 <b>Alternatif İlgili Gam:</b> <a href="#" id="alt-scale-link" style="color:var(--primary); text-decoration:underline; font-weight:bold;">${altScaleName} Gamına Geç</a>`; }
-    tipHtml += `<br><br>🔥 <b>Solo Teknikleri:</b><br><div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;"><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('hammeron')">🔨 Hammer-On</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('pulloff')">⤵ Pull-Off</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('slide')">↗ Slide</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('bend')">⤴ Bend</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('vibrato')">〰 Vibrato</span></div>`;
+    if(advMode === 'auto') { tipHtml += `<br><br>👉 <b>${window.appLang === 'en' ? "Alternative Relative Scale:" : "Alternatif İlgili Gam:"}</b> <a href="#" id="alt-scale-link" style="color:var(--primary); text-decoration:underline; font-weight:bold;">${window.appLang === 'en' ? "Switch to " + altScaleName + " Scale" : altScaleName + " Gamına Geç"}</a>`; }
+    tipHtml += `<br><br>🔥 <b>${window.appLang === 'en' ? "Solo Techniques:" : "Solo Teknikleri:"}</b><br><div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;"><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('hammeron')">🔨 Hammer-On</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('pulloff')">⤵ Pull-Off</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('slide')">↗ Slide</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('bend')">⤴ Bend</span><span class="btn" style="padding:4px 8px; font-size:11px; cursor:pointer;" onclick="playTechnique('vibrato')">〰 Vibrato</span></div>`;
 
-    if(document.getElementById('scale-text')) document.getElementById('scale-text').innerHTML = `💡 Tavsiye Edilen Solo Gamı: <b>${scaleName}</b>`;
+    if(document.getElementById('scale-text')) document.getElementById('scale-text').innerHTML = window.appLang === 'en' ? `💡 Recommended Solo Scale: <b>${scaleName}</b>` : `💡 Tavsiye Edilen Solo Gamı: <b>${scaleName}</b>`;
     if(document.getElementById('scale-details-text')) document.getElementById('scale-details-text').innerHTML = tipHtml;
     const altLink = document.getElementById('alt-scale-link');
     if(altLink) { altLink.addEventListener('click', (e) => { e.preventDefault(); currentRootIndex = altRootIndex; currentType = altScaleType; transCount = 0; updateTransUI(); updateUI(true); viewingScaleMode = true; drawScaleFretboard(); }); }
@@ -247,7 +257,7 @@ function drawScaleFretboard() {
     }
 
     const typeLabels = { "Maj": "", "Min": "m", "Dom7": "7", "Min7": "m7", "Maj7": "maj7", "Sus4": "sus4", "Sus2": "sus2", "Dim": "dim", "Aug": "aug", "Min7b5":"m7b5", "Maj9":"maj9", "Min9":"m9", "5":"5", "mMaj7":"m(maj7)", "Add9":"add9", "mAdd9":"m(add9)", "6":"6", "m6":"m6", "7b9":"7b9", "7#9":"7#9" };
-    let finalScaleTitle = advMode === 'auto' ? (isMin ? `${window.trNotes[window.notes[effectiveRootIndex]]} Minör Pentatonik` : `${window.trNotes[window.notes[effectiveRootIndex]]} Majör Pentatonik`) : `${window.trNotes[window.notes[effectiveRootIndex]]} ${advScaleSelect.options[advScaleSelect.selectedIndex].text}`;
+    let finalScaleTitle = advMode === 'auto' ? (isMin ? (window.appLang === 'en' ? `${window.notes[effectiveRootIndex]} Minor Pentatonic` : `${window.trNotes[window.notes[effectiveRootIndex]]} Minör Pentatonik`) : (window.appLang === 'en' ? `${window.notes[effectiveRootIndex]} Major Pentatonic` : `${window.trNotes[window.notes[effectiveRootIndex]]} Majör Pentatonik`)) : `${window.trNotes[window.notes[effectiveRootIndex]]} ${advScaleSelect.options[advScaleSelect.selectedIndex].text}`;
     let typeStr = typeLabels[currentType] !== undefined ? typeLabels[currentType] : currentType;
     
     const titleEl = document.getElementById('chord-title');
@@ -265,10 +275,10 @@ function drawScaleFretboard() {
             titleEl.innerText = capoFret > 0 ? `${soundName} (Kapo ${capoFret})` : soundName;
         }
     }
-    if(document.getElementById('chord-known-name')) document.getElementById('chord-known-name').innerText = capoFret > 0 ? `Ses: ${finalScaleTitle} | Form: ${window.notes[currentRootIndex]}` : `Ses: ${finalScaleTitle}`;
-    if(document.getElementById('variation-text')) document.getElementById('variation-text').innerText = scalePos === 'pos1' ? `Kalıp: 1. Pozisyon (Önerilen Yol)` : `Kalıp: Tüm Klavye Yayılımı`;
+    if(document.getElementById('chord-known-name')) document.getElementById('chord-known-name').innerText = capoFret > 0 ? `${window.appLang === 'en' ? 'Sound' : 'Ses'}: ${finalScaleTitle} | ${window.appLang === 'en' ? 'Shape' : 'Form'}: ${window.notes[currentRootIndex]}` : `${window.appLang === 'en' ? 'Sound' : 'Ses'}: ${finalScaleTitle}`;
+    if(document.getElementById('variation-text')) document.getElementById('variation-text').innerText = scalePos === 'pos1' ? (window.appLang === 'en' ? `Pattern: 1st Position (Recommended)` : `Kalıp: 1. Pozisyon (Önerilen Yol)`) : (window.appLang === 'en' ? `Pattern: Full Fretboard Spread` : `Kalıp: Tüm Klavye Yayılımı`);
     if(document.getElementById('var-group')) document.getElementById('var-group').style.display = 'none';
-    if(btnToggleScale) { btnToggleScale.innerText = "🎵 Bu Gamı Klavyede Göster"; btnToggleScale.style.background = "var(--success)"; }
+    if(btnToggleScale) { btnToggleScale.innerText = window.appLang === 'en' ? "🎵 Show Scale on Fretboard" : "🎵 Bu Gamı Klavyede Göster"; btnToggleScale.style.background = "var(--success)"; }
 }
 
 function updateUI(fromDropdown = false, resetVar = true) {
@@ -278,7 +288,7 @@ function updateUI(fromDropdown = false, resetVar = true) {
     if(rootSelect) rootSelect.value = currentRootIndex; 
     if (viewingScaleMode) drawScaleFretboard(); else drawFretboard();
     updateScaleAssistant();
-    window.isCapoAction = false; // Animasyon oynatıldıktan sonra bayrağı sıfırla
+    window.isCapoAction = false; 
 }
 
 function drawFretboard() {
@@ -374,13 +384,22 @@ function drawFretboard() {
         }
     }
     
-    if(document.getElementById('chord-known-name')) document.getElementById('chord-known-name').innerText = capoFret > 0 ? `Ses: ${window.trNotes[window.notes[effectiveRootIndex]]} ${typeStr === '' ? 'Majör' : (typeStr === 'm' ? 'Minör' : typeStr)} | Form: ${window.notes[currentRootIndex]}` : `Ses: ${window.trNotes[window.notes[effectiveRootIndex]]} ${typeStr === '' ? 'Majör' : (typeStr === 'm' ? 'Minör' : typeStr)}`;
-    if(document.getElementById('variation-text')) document.getElementById('variation-text').innerText = `Varyasyon: ${currentVarIndex + 1} / ${currentVariations.length}`;
+    let tSound = window.appLang === 'en' ? 'Sound' : 'Ses';
+    let tShape = window.appLang === 'en' ? 'Shape' : 'Form';
+    let tMaj = window.appLang === 'en' ? 'Major' : 'Majör';
+    let tMin = window.appLang === 'en' ? 'Minor' : 'Minör';
+    let displayTypeStr = typeStr === '' ? tMaj : (typeStr === 'm' ? tMin : typeStr);
+    let noteNameTr = window.trNotes[window.notes[effectiveRootIndex]];
+    let noteNameEn = window.notes[effectiveRootIndex];
+    let noteName = window.appLang === 'en' ? noteNameEn : noteNameTr;
+
+    if(document.getElementById('chord-known-name')) document.getElementById('chord-known-name').innerText = capoFret > 0 ? `${tSound}: ${noteName} ${displayTypeStr} | ${tShape}: ${window.notes[currentRootIndex]}` : `${tSound}: ${noteName} ${displayTypeStr}`;
+    if(document.getElementById('variation-text')) document.getElementById('variation-text').innerText = window.appLang === 'en' ? `Variation: ${currentVarIndex + 1} / ${currentVariations.length}` : `Varyasyon: ${currentVarIndex + 1} / ${currentVariations.length}`;
     if(document.getElementById('var-group')) document.getElementById('var-group').style.display = 'flex';
-    if(btnToggleScale) { btnToggleScale.innerText = "🎵 Bu Gamı Klavyede Göster"; btnToggleScale.style.background = "var(--primary)"; }
+    if(btnToggleScale) { btnToggleScale.innerText = window.appLang === 'en' ? "🎵 Show Scale on Fretboard" : "🎵 Bu Gamı Klavyede Göster"; btnToggleScale.style.background = "var(--primary)"; }
 }
 
-if(btnToggleScale) { btnToggleScale.addEventListener('click', () => { viewingScaleMode = !viewingScaleMode; if(viewingScaleMode) drawScaleFretboard(); else drawFretboard(); const fretboardPanel = document.getElementById('fretboard-panel'); if(fretboardPanel && viewingScaleMode) { setTimeout(() => { fretboardPanel.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); } }); }
+if(btnToggleScale) { btnToggleScale.addEventListener('click', () => { viewingScaleMode = !viewingScaleMode; if(viewingScaleMode) { drawScaleFretboard(); const title = window.appLang === 'en' ? "Think Outside the Boxes" : "Kutuların Dışına Çık"; const msg = window.appLang === 'en' ? "If Jimi Hendrix or Albert King were here, they'd say: 'Step outside the boxes in this visual guide, bend the strings, and just play with your feel!'" : "Eğer Jimi Hendrix veya Albert King burada olsaydı: 'Bu görsel kılavuzdaki kutuların dışına çıkın, telleri bükün (bending) ve sadece hissinizle çalın!' derdi."; showLegendMessage(title, msg); } else { drawFretboard(); } const fretboardPanel = document.getElementById('fretboard-panel'); if(fretboardPanel && viewingScaleMode) { setTimeout(() => { fretboardPanel.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); } }); }
 
 const btnCapoUp = document.getElementById('btn-capo-up'); const btnCapoDown = document.getElementById('btn-capo-down');
 if(btnCapoUp) { btnCapoUp.addEventListener('click', () => { if(capoFret < 12) { capoFret++; if(window.domCache.capoVal) window.domCache.capoVal.innerText = capoFret; window.isCapoAction = true; updateUI(false, false); } }); }
@@ -403,7 +422,7 @@ function playShape(shape, style) {
         stringOrder.forEach(i => { const sData = shape[i]; if (sData && sData.fret !== 'x') { let actualFret = sData.fret === 0 ? capoFret : sData.fret + capoFret; const freq = window.baseFrequencies[i] * Math.pow(2, actualFret / 12); window.playString(freq, hitDelay, dur, window.domCache.instrumentSelect ? window.domCache.instrumentSelect.value : 'acoustic', window.chordVol); } });
     });
 }
-
+/* BÖLÜM 1 SONU - BURAYA KADAR KOPYALA VE YAPIŞTIR */
 const drumPatterns = { rock: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0], s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0], h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] }, funk: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0], s: [0,0,0,0, 1,0,0,1, 0,1,0,0, 1,0,0,0], h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] }, lofi: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0], s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0], h: [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1] }, jazz: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0], s: [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,1], h: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0] } };
 const metroWorkerCode = `let timerID = null; self.onmessage = function(e) { if (e.data === 'start') { if (timerID) clearInterval(timerID); timerID = setInterval(() => postMessage('tick'), 25); } else if (e.data === 'stop') { if (timerID) clearInterval(timerID); timerID = null; } };`;
 const metroWorkerBlob = new Blob([metroWorkerCode], { type: 'application/javascript' }); const metroWorker = new Worker(URL.createObjectURL(metroWorkerBlob)); metroWorker.onmessage = function(e) { if (e.data === 'tick') scheduler(); };
@@ -455,8 +474,11 @@ const btnMetro = document.getElementById('btn-metro'); const activeMetroIndicato
 if(btnMetro) {
     btnMetro.addEventListener('click', (e) => {
         window.initAudio(); window.isMetroOn = !window.isMetroOn;
-        if (window.isMetroOn) { e.target.innerText = "KAPAT"; e.target.classList.add('active'); window.current16thNote = 0; trainerMeasureCount = 0; window.nextNoteTime = window.audioCtx.currentTime + 0.05; metroWorker.postMessage('start'); if(activeMetroIndicator) activeMetroIndicator.style.display = 'flex'; } 
-        else { e.target.innerText = "AÇ"; e.target.classList.remove('active'); if (!window.isPlayingProgression) metroWorker.postMessage('stop'); const appCont = document.querySelector('.app-container'); if (appCont) appCont.classList.remove('flash-measure', 'flash-beat'); if(activeMetroIndicator) activeMetroIndicator.style.display = 'none'; }
+        if (window.isMetroOn) { 
+            e.target.innerText = window.appLang === 'en' ? "OFF" : "KAPAT"; e.target.classList.add('active'); window.current16thNote = 0; trainerMeasureCount = 0; window.nextNoteTime = window.audioCtx.currentTime + 0.05; metroWorker.postMessage('start'); if(activeMetroIndicator) activeMetroIndicator.style.display = 'flex'; 
+        } else { 
+            e.target.innerText = window.appLang === 'en' ? "ON" : "AÇ"; e.target.classList.remove('active'); if (!window.isPlayingProgression) metroWorker.postMessage('stop'); const appCont = document.querySelector('.app-container'); if (appCont) appCont.classList.remove('flash-measure', 'flash-beat'); if(activeMetroIndicator) activeMetroIndicator.style.display = 'none'; 
+        }
     });
 }
 
@@ -476,10 +498,17 @@ if(window.domCache.bpmInput) { window.domCache.bpmInput.addEventListener('change
 if(window.domCache.rhythmStyle) { window.domCache.rhythmStyle.addEventListener('change', () => { saveSession(); }); }
 const volSlider = document.getElementById('vol-slider'); if(volSlider) volSlider.addEventListener('input', (e) => { window.metroVol = parseFloat(e.target.value); });
 const themeToggle = document.getElementById('theme-toggle'); if(themeToggle) { if(localStorage.getItem('gitar_theme') === 'light') { themeToggle.checked = true; document.body.classList.remove('dark-mode'); } themeToggle.addEventListener('change', (e) => { if(e.target.checked) { document.body.classList.remove('dark-mode'); localStorage.setItem('gitar_theme', 'light'); } else { document.body.classList.add('dark-mode'); localStorage.setItem('gitar_theme', 'dark'); } }); }
-const leftyToggle = document.getElementById('lefty-toggle'); if(leftyToggle) { if(localStorage.getItem('gitar_lefty') === 'true') { leftyToggle.checked = true; isLefty = true; } leftyToggle.addEventListener('change', e => { isLefty = e.target.checked; localStorage.setItem('gitar_lefty', isLefty); updateUI(); if (typeof renderProgression === 'function') renderProgression(); }); }
-
-if(rootSelect) rootSelect.addEventListener('change', e => { currentRootIndex = parseInt(e.target.value); updateUI(true); });
-if(typeSelect) typeSelect.addEventListener('change', e => { currentType = e.target.value; updateUI(true); });
+const leftyToggle = document.getElementById('lefty-toggle'); if(leftyToggle) { if(localStorage.getItem('gitar_lefty') === 'true') { leftyToggle.checked = true; isLefty = true; } leftyToggle.addEventListener('change', e => { isLefty = e.target.checked; localStorage.setItem('gitar_lefty', isLefty); updateUI(); if (typeof renderProgression === 'function') renderProgression(); if(isLefty) { const title = window.appLang === 'en' ? "Welcome to the Lefty Club" : "Solaklar Kulübüne Hoş Geldin"; const msg = window.appLang === 'en' ? "Don't forget that legends like Jimi Hendrix, Paul McCartney, and Kurt Cobain were left-handed. You make the rules!" : "Gitar dünyasında Jimi Hendrix, Paul McCartney ve Kurt Cobain gibi efsanelerin solak olduğunu unutma. Kuralları sen yazacaksın!"; showLegendMessage(title, msg); } }); }
+function triggerVanHalenTip() {
+    if (!window.vanHalenMessageShown) {
+        const title = window.appLang === 'en' ? "Solve the Fretboard Geometry" : "Klavyenin Geometrisini Çöz";
+        const msg = window.appLang === 'en' ? "Eddie Van Halen was a genius who solved the visual geometry of the fretboard. Don't waste time with static images; learn by seeing notes on this interactive fretboard!" : "Eddie Van Halen notaları tek tek ezberlemek yerine klavyenin görsel geometrisini çözen bir dahiydi. Statik resimlerle vakit kaybetme; değişen ve ışıklanan bu interaktif klavyede notaları görerek öğren!";
+        showLegendMessage(title, msg);
+        window.vanHalenMessageShown = true;
+    }
+}
+if(rootSelect) rootSelect.addEventListener('change', e => { currentRootIndex = parseInt(e.target.value); updateUI(true); triggerVanHalenTip(); });
+if(typeSelect) typeSelect.addEventListener('change', e => { currentType = e.target.value; updateUI(true); triggerVanHalenTip(); });
 const btnUp = document.getElementById('btn-up'); if(btnUp) btnUp.addEventListener('click', () => { transCount++; updateTransUI(); currentRootIndex = (currentRootIndex + 1) % 12; updateUI(false, true); });
 const btnDown = document.getElementById('btn-down'); if(btnDown) btnDown.addEventListener('click', () => { transCount--; updateTransUI(); currentRootIndex = (currentRootIndex - 1 + 12) % 12; updateUI(false, true); });
 const btnTransReset = document.getElementById('btn-trans-reset'); if(btnTransReset) btnTransReset.addEventListener('click', () => { transCount = 0; capoFret = 0; if(window.domCache.capoVal) window.domCache.capoVal.innerText = capoFret; updateTransUI(); currentRootIndex = baseRootIndex; currentType = baseType; updateUI(false, true); });
@@ -507,8 +536,8 @@ function getDragAfterElement(container, y) { const draggableElements = [...conta
 
 function renderProgression() {
     if(!timelineEl) return;
-    if (progression.length === 0) { timelineEl.innerHTML = '<div class="empty-text">Henüz akor eklenmedi. (1, 2, 3... tuşlarıyla canlı çalabilirsin)</div>'; window.currentProgTitle = "Özel Akor Dizisi"; renderAiSuggestions(); return; }
-    if (!window.currentProgTitle) { window.currentProgTitle = "🎸 Özel Akor Kombinasyonu"; }
+    if (progression.length === 0) { const emptyText = window.appLang === 'en' ? "No chords added yet. (You can play live with 1, 2, 3... keys)" : "Henüz akor eklenmedi. (1, 2, 3... tuşlarıyla canlı çalabilirsin)"; timelineEl.innerHTML = `<div class="empty-text">${emptyText}</div>`; window.currentProgTitle = window.appLang === 'en' ? "Custom Chord Progression" : "Özel Akor Dizisi"; renderAiSuggestions(); return; }
+    if (!window.currentProgTitle) { window.currentProgTitle = window.appLang === 'en' ? "🎸 Custom Chord Combination" : "🎸 Özel Akor Kombinasyonu"; }
     
     timelineEl.innerHTML = ''; const titleHeader = document.createElement('div'); titleHeader.style.cssText = "font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 8px; width: 100%; display: flex; align-items: center; gap: 6px;"; titleHeader.innerHTML = `✨ ${window.currentProgTitle}`; timelineEl.appendChild(titleHeader);
     timelineEl.style.display = 'flex'; timelineEl.style.flexWrap = 'wrap'; timelineEl.style.gap = '15px'; timelineEl.style.padding = '10px 5px'; timelineEl.style.whiteSpace = 'nowrap';
@@ -548,10 +577,9 @@ function renderProgression() {
     renderAiSuggestions();
 }
 
-const btnAddProg = document.getElementById('btn-add-prog'); if(btnAddProg) btnAddProg.addEventListener('click', () => { progression.push({ root: currentRootIndex, type: currentType, shape: currentVariations[currentVarIndex] }); window.currentProgTitle = "🎸 Özel Akor Kombinasyonu"; renderProgression(); saveSession(); });
-const btnClearProg = document.getElementById('btn-clear-prog'); if(btnClearProg) btnClearProg.addEventListener('click', () => { progression = []; progTransCount = 0; updateTransUI(); renderProgression(); saveSession(); });
-const btnInspire = document.getElementById('btn-inspire'); if(btnInspire) { btnInspire.addEventListener('click', () => { const templates = [[0, 5, 7, 5], [0, 9, 5, 7], [0, 7, 9, 5], [0, 3, 5, 7], [0, 2, 7, 5], [0, 4, 9, 7], [0, 5, 2, 7], [0, 7, 10, 5], [9, 5, 2, 7], [0, 4, 5, 7], [2, 7, 9, 4], [0, 5, 9, 2]]; let temp = templates[Math.floor(Math.random() * templates.length)]; progression = temp.map(offset => { let r = (currentRootIndex + offset) % 12; let t = (offset === 9 || offset === 3 || offset === 2) ? "Min" : "Maj"; return { root: r, type: t, shape: window.generateVariations(r, t)[0] }; }); window.currentProgTitle = "🎲 İlham Ver (Rastgele Kombinasyon)"; renderProgression(); saveSession(); }); }
-const presetSelect = document.getElementById('preset-select'); if(presetSelect) { presetSelect.addEventListener('change', (e) => { const val = e.target.value; let pList = []; let presetTitle = "Özel Akor Dizisi"; if(val === 'pop') { pList = [{r: 9, t: "Min"}, {r: 5, t: "Maj"}, {r: 0, t: "Maj"}, {r: 7, t: "Maj"}]; presetTitle = "🎵 Pop Hit Kalıbı"; } else if(val === 'pop2') { pList = [{r: 0, t: "Maj"}, {r: 7, t: "Maj"}, {r: 9, t: "Min"}, {r: 5, t: "Maj"}]; presetTitle = "🎵 Modern Pop Kalıbı"; } else if(val === 'blues') { pList = [{r: 9, t: "Dom7"}, {r: 2, t: "Dom7"}, {r: 4, t: "Dom7"}]; presetTitle = "🎸 12-Bar Blues"; } else if(val === 'jazz') { pList = [{r: 2, t: "Min7"}, {r: 7, t: "Dom7"}, {r: 0, t: "Maj7"}]; presetTitle = "🎷 Jazz Standardı (ii-V-I)"; } else if(val === 'rnbsoul') { pList = [{r: 5, t: "Maj7"}, {r: 4, t: "Dom7"}, {r: 9, t: "Min7"}, {r: 0, t: "Maj7"}]; presetTitle = "🎹 R&B / Soul Akış"; } else if(val === 'rock') { pList = [{r: 4, t: "Maj"}, {r: 2, t: "Maj"}, {r: 9, t: "Maj"}, {r: 4, t: "Maj"}]; presetTitle = "🎸 Klasik Rock Riff"; } else if(val === 'anatolian') { pList = [{r: 2, t: "Min"}, {r: 0, t: "Maj"}, {r: 10, t: "Maj"}, {r: 9, t: "Min"}]; presetTitle = "🎶 Anadolu Rock Esintisi"; } else if(val === 'flamenco') { pList = [{r: 9, t: "Min"}, {r: 7, t: "Maj"}, {r: 5, t: "Maj"}, {r: 4, t: "Maj"}]; presetTitle = "🔥 Flamenko / Endülüs"; } else if(val === 'spanish') { pList = [{r: 4, t: "Min"}, {r: 2, t: "Maj"}, {r: 0, t: "Maj"}, {r: 11, t: "Dom7"}]; presetTitle = "💃 İspanyol Dokunuşu"; } else if(val === 'fifties') { pList = [{r: 0, t: "Maj"}, {r: 9, t: "Min"}, {r: 5, t: "Maj"}, {r: 7, t: "Maj"}]; presetTitle = "📻 50'ler Rock'n Roll"; } else if(val === 'creep') { pList = [{r: 7, t: "Maj"}, {r: 11, t: "Maj"}, {r: 0, t: "Maj"}, {r: 0, t: "Min"}]; presetTitle = "🎸 Alternatif Rock Kalıbı"; } if(pList.length > 0) { progression = pList.map(item => ({ root: item.r, type: item.t, shape: window.generateVariations(item.r, item.t)[0] })); window.currentProgTitle = presetTitle; renderProgression(); saveSession(); } e.target.value = ""; }); }
+const btnAddProg = document.getElementById('btn-add-prog'); if(btnAddProg) btnAddProg.addEventListener('click', () => { progression.push({ root: currentRootIndex, type: currentType, shape: currentVariations[currentVarIndex] }); window.currentProgTitle = window.appLang === 'en' ? "🎸 Custom Chord Combination" : "🎸 Özel Akor Kombinasyonu"; renderProgression(); saveSession(); if (!window.bowieMessageShown) { const title = window.appLang === 'en' ? "Avant-Garde Transitions" : "Avangart Geçişler"; const msg = window.appLang === 'en' ? "Legends like David Bowie and Radiohead hated ordinary progressions. Discover those surprise transitions that add mystery to your music." : "David Bowie ve Radiohead gibi efsaneler sıradan yürüyüşlerden nefret ederdi. Akor pusulamızla müziğine derinlik ve gizem katacak o ters köşe (sürpriz) geçişleri keşfet."; showLegendMessage(title, msg); window.bowieMessageShown = true; } });
+const btnInspire = document.getElementById('btn-inspire'); if(btnInspire) { btnInspire.addEventListener('click', () => { const templates = [[0, 5, 7, 5], [0, 9, 5, 7], [0, 7, 9, 5], [0, 3, 5, 7], [0, 2, 7, 5], [0, 4, 9, 7], [0, 5, 2, 7], [0, 7, 10, 5], [9, 5, 2, 7], [0, 4, 5, 7], [2, 7, 9, 4], [0, 5, 9, 2]]; let temp = templates[Math.floor(Math.random() * templates.length)]; progression = temp.map(offset => { let r = (currentRootIndex + offset) % 12; let t = (offset === 9 || offset === 3 || offset === 2) ? "Min" : "Maj"; return { root: r, type: t, shape: window.generateVariations(r, t)[0] }; }); window.currentProgTitle = window.appLang === 'en' ? "🎲 Inspire Me (Random Combo)" : "🎲 İlham Ver (Rastgele Kombinasyon)"; renderProgression(); saveSession(); }); }
+const presetSelect = document.getElementById('preset-select'); if(presetSelect) { presetSelect.addEventListener('change', (e) => { const val = e.target.value; let pList = []; let presetTitle = window.appLang === 'en' ? "Custom Chord Progression" : "Özel Akor Dizisi"; if(val === 'pop') { pList = [{r: 9, t: "Min"}, {r: 5, t: "Maj"}, {r: 0, t: "Maj"}, {r: 7, t: "Maj"}]; presetTitle = window.appLang === 'en' ? "🎵 Pop Hit Pattern" : "🎵 Pop Hit Kalıbı"; } else if(val === 'pop2') { pList = [{r: 0, t: "Maj"}, {r: 7, t: "Maj"}, {r: 9, t: "Min"}, {r: 5, t: "Maj"}]; presetTitle = window.appLang === 'en' ? "🎵 Modern Pop Pattern" : "🎵 Modern Pop Kalıbı"; } else if(val === 'blues') { pList = [{r: 9, t: "Dom7"}, {r: 2, t: "Dom7"}, {r: 4, t: "Dom7"}]; presetTitle = "🎸 12-Bar Blues"; } else if(val === 'jazz') { pList = [{r: 2, t: "Min7"}, {r: 7, t: "Dom7"}, {r: 0, t: "Maj7"}]; presetTitle = window.appLang === 'en' ? "🎷 Jazz Standard (ii-V-I)" : "🎷 Jazz Standardı (ii-V-I)"; } else if(val === 'rnbsoul') { pList = [{r: 5, t: "Maj7"}, {r: 4, t: "Dom7"}, {r: 9, t: "Min7"}, {r: 0, t: "Maj7"}]; presetTitle = window.appLang === 'en' ? "🎹 R&B / Soul Flow" : "🎹 R&B / Soul Akış"; } else if(val === 'rock') { pList = [{r: 4, t: "Maj"}, {r: 2, t: "Maj"}, {r: 9, t: "Maj"}, {r: 4, t: "Maj"}]; presetTitle = window.appLang === 'en' ? "🎸 Classic Rock Riff" : "🎸 Klasik Rock Riff"; } else if(val === 'anatolian') { pList = [{r: 2, t: "Min"}, {r: 0, t: "Maj"}, {r: 10, t: "Maj"}, {r: 9, t: "Min"}]; presetTitle = window.appLang === 'en' ? "🎶 Anatolian Rock Vibe" : "🎶 Anadolu Rock Esintisi"; } else if(val === 'flamenco') { pList = [{r: 9, t: "Min"}, {r: 7, t: "Maj"}, {r: 5, t: "Maj"}, {r: 4, t: "Maj"}]; presetTitle = "🔥 Flamenko / Endülüs"; } else if(val === 'spanish') { pList = [{r: 4, t: "Min"}, {r: 2, t: "Maj"}, {r: 0, t: "Maj"}, {r: 11, t: "Dom7"}]; presetTitle = window.appLang === 'en' ? "💃 Spanish Touch" : "💃 İspanyol Dokunuşu"; } else if(val === 'fifties') { pList = [{r: 0, t: "Maj"}, {r: 9, t: "Min"}, {r: 5, t: "Maj"}, {r: 7, t: "Maj"}]; presetTitle = "📻 50's Rock'n Roll"; } else if(val === 'creep') { pList = [{r: 7, t: "Maj"}, {r: 11, t: "Maj"}, {r: 0, t: "Maj"}, {r: 0, t: "Min"}]; presetTitle = window.appLang === 'en' ? "🎸 Alternative Rock Pattern" : "🎸 Alternatif Rock Kalıbı"; } if(pList.length > 0) { progression = pList.map(item => ({ root: item.r, type: item.t, shape: window.generateVariations(item.r, item.t)[0] })); window.currentProgTitle = presetTitle; renderProgression(); saveSession(); } e.target.value = ""; }); }
 const btnProgUp = document.getElementById('btn-prog-up'); if(btnProgUp) { btnProgUp.addEventListener('click', () => { if(progression.length===0) return; progTransCount++; updateTransUI(); progression.forEach(c => { c.root = (c.root+1)%12; c.shape = window.generateVariations(c.root, c.type)[0]; }); renderProgression(); saveSession(); }); }
 const btnProgDown = document.getElementById('btn-prog-down'); if(btnProgDown) { btnProgDown.addEventListener('click', () => { if(progression.length===0) return; progTransCount--; updateTransUI(); progression.forEach(c => { c.root = (c.root-1+12)%12; c.shape = window.generateVariations(c.root, c.type)[0]; }); renderProgression(); saveSession(); }); }
 
@@ -595,9 +623,9 @@ const btnPlayProg = document.getElementById('btn-play-prog');
 if(btnPlayProg) {
     btnPlayProg.addEventListener('click', () => {
         const btn = document.getElementById('btn-play-prog');
-        if(window.isPlayingProgression) { window.isPlayingProgression = false; btn.classList.remove('btn-stop'); btn.innerHTML = '▶ Diziyi Çal <kbd class="kbd-badge" style="pointer-events:none;">S</kbd>'; document.querySelectorAll('.prog-card').forEach(c => c.classList.remove('active')); if (!window.isMetroOn) metroWorker.postMessage('stop'); return; }
+        if(window.isPlayingProgression) { window.isPlayingProgression = false; btn.classList.remove('btn-stop'); btn.innerHTML = (window.appLang === 'en' ? '▶ Play Sequence <kbd class="kbd-badge" style="pointer-events:none;">S</kbd>' : '▶ Diziyi Çal <kbd class="kbd-badge" style="pointer-events:none;">S</kbd>'); document.querySelectorAll('.prog-card').forEach(c => c.classList.remove('active')); if (!window.isMetroOn) metroWorker.postMessage('stop'); return; }
         if(progression.length === 0) return;
-        window.isPlayingProgression = true; btn.classList.add('btn-stop'); btn.innerText = "⏹ Durdur"; window.current16thNote = 0; currentProgressionIndex = 0; progressionBeatCounter = 0; window.initAudio(); window.nextNoteTime = window.audioCtx.currentTime + 0.05; metroWorker.postMessage('start');
+        window.isPlayingProgression = true; btn.classList.add('btn-stop'); btn.innerText = window.appLang === 'en' ? "⏹ Stop" : "⏹ Durdur"; window.current16thNote = 0; currentProgressionIndex = 0; progressionBeatCounter = 0; window.initAudio(); window.nextNoteTime = window.audioCtx.currentTime + 0.05; metroWorker.postMessage('start');
     });
 }
 
@@ -617,8 +645,8 @@ function updatePitch() {
         let displayDetune = Math.round(window.lastDetune); let rot = (displayDetune / 50) * 45; rot = Math.max(-45, Math.min(45, rot)); 
         if(tunerNeedleEl) tunerNeedleEl.style.transform = `translateX(-50%) rotate(${rot}deg)`; 
         if(tunerNoteEl) tunerNoteEl.innerText = window.notes[roundedNote % 12];
-        if(Math.abs(displayDetune) <= 3) { if(tunerNeedleEl) tunerNeedleEl.classList.add('in-tune'); if(tunerInstEl) { tunerInstEl.innerText = "Tam Kararında! 🎯"; tunerInstEl.style.color = "var(--success)"; } } 
-        else { if(tunerNeedleEl) tunerNeedleEl.classList.remove('in-tune'); if(tunerInstEl) { tunerInstEl.style.color = "var(--danger)"; if(displayDetune < 0) tunerInstEl.innerText = `Sık (▶)`; else tunerInstEl.innerText = `(◀) Gevşet`; } }
+        if(Math.abs(displayDetune) <= 3) { if(tunerNeedleEl) tunerNeedleEl.classList.add('in-tune'); if(tunerInstEl) { tunerInstEl.innerText = window.appLang === 'en' ? "In Tune! 🎯" : "Tam Kararında! 🎯"; tunerInstEl.style.color = "var(--success)"; } } 
+        else { if(tunerNeedleEl) tunerNeedleEl.classList.remove('in-tune'); if(tunerInstEl) { tunerInstEl.style.color = "var(--danger)"; if(displayDetune < 0) tunerInstEl.innerText = window.appLang === 'en' ? "Tighten (▶)" : "Sık (▶)"; else tunerInstEl.innerText = window.appLang === 'en' ? "(◀) Loosen" : "(◀) Gevşet"; } }
     }
     tunerReqId = requestAnimationFrame(updatePitch);
 }
@@ -627,15 +655,15 @@ const btnMic = document.getElementById('btn-mic');
 if(btnMic) {
     btnMic.addEventListener('click', async () => {
         const hasConsent = await window.ensureMicConsent(); if (!hasConsent) return; 
-        if (window.isStudioRecording) { showToast("⚠️ Kayıt sırasında akort cihazı açılamaz!"); return; }
+        if (window.isStudioRecording) { showToast(window.appLang === 'en' ? "⚠️ Tuner cannot be opened during recording!" : "⚠️ Kayıt sırasında akort cihazı açılamaz!"); return; }
         try {
             window.initAudio(); 
-            if(isMicOn) { isMicOn = false; if(tunerReqId) cancelAnimationFrame(tunerReqId); document.getElementById('btn-mic').innerText = "🎙️ Akort Et"; if(tunerNoteEl) tunerNoteEl.innerText = "--"; if(tunerInstEl) { tunerInstEl.innerText = "Mikrofon duraklatıldı"; tunerInstEl.style.color = "var(--text-muted)"; } return; }
+            if(isMicOn) { isMicOn = false; if(tunerReqId) cancelAnimationFrame(tunerReqId); document.getElementById('btn-mic').innerText = window.appLang === 'en' ? "🎙️ Tune" : "🎙️ Akort Et"; if(tunerNoteEl) tunerNoteEl.innerText = "--"; if(tunerInstEl) { tunerInstEl.innerText = window.appLang === 'en' ? "Paused" : "Mikrofon duraklatıldı"; tunerInstEl.style.color = "var(--text-muted)"; } return; }
             if(!globalMicStream) globalMicStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
             if(!tunerAnalyser) { tunerAnalyser = window.audioCtx.createAnalyser(); tunerAnalyser.fftSize = 4096; let micSource = window.audioCtx.createMediaStreamSource(globalMicStream); micSource.connect(tunerAnalyser); }
-            isMicOn = true; document.getElementById('btn-mic').innerText = "🛑 Duraklat"; if(tunerInstEl) { tunerInstEl.innerText = "Dinleniyor..."; tunerInstEl.style.color = "var(--text)"; }
+            isMicOn = true; document.getElementById('btn-mic').innerText = window.appLang === 'en' ? "🛑 Pause" : "🛑 Duraklat"; if(tunerInstEl) { tunerInstEl.innerText = window.appLang === 'en' ? "Listening..." : "Dinleniyor..."; tunerInstEl.style.color = "var(--text)"; }
             updatePitch();
-        } catch (err) { showToast("⚠️ Mikrofon erişimi reddedildi."); console.error(err); }
+        } catch (err) { showToast(window.appLang === 'en' ? "⚠️ Microphone access denied." : "⚠️ Mikrofon erişimi reddedildi."); console.error(err); }
     });
 }
 
@@ -657,10 +685,10 @@ window.toggleLiveMonitor = async (isChecked) => {
         if (!micInputNode) { micInputNode = window.audioCtx.createMediaStreamSource(globalMicStream); }
         if (!monitorGainNode) { monitorGainNode = window.audioCtx.createGain(); monitorGainNode.gain.value = 1.0; monitorGainNode.connect(window.audioCtx.destination); }
         try { micInputNode.connect(monitorGainNode); } catch(e){}
-        if (window.showToast) showToast("🎧 Canlı Monitör AÇIK (Sıfır Gecikme). Uğultu yapmaması için KULAKLIK kullanın!", 4000);
+        if (window.showToast) showToast(window.appLang === 'en' ? "🎧 Live Monitor ON (Zero Latency). Use HEADPHONES to avoid feedback!" : "🎧 Canlı Monitör AÇIK (Sıfır Gecikme). Uğultu yapmaması için KULAKLIK kullanın!", 4000);
     } else {
         if (micInputNode && monitorGainNode) { try { micInputNode.disconnect(monitorGainNode); } catch(e){} }
-        if (window.showToast) showToast("🎧 Canlı Monitör KAPALI.");
+        if (window.showToast) showToast(window.appLang === 'en' ? "🎧 Live Monitor OFF." : "🎧 Canlı Monitör KAPALI.");
     }
 };
 
@@ -682,7 +710,7 @@ function initStudioEffects() {
 }
 
 async function saveTrackToDB(name, blob, callback) {
-    if (navigator.storage && navigator.storage.estimate) { try { const estimate = await navigator.storage.estimate(); const usageMB = estimate.usage / (1024 * 1024); if (usageMB > 150) { showToast("⚠️ Cihaz hafızası dolmak üzere! Kayıt yapılamadı. Lütfen gereksiz kanalları silin."); if (callback) callback(null); return; } } catch(e) {} }
+    if (navigator.storage && navigator.storage.estimate) { try { const estimate = await navigator.storage.estimate(); const usageMB = estimate.usage / (1024 * 1024); if (usageMB > 150) { showToast(window.appLang === 'en' ? "⚠️ Storage almost full! Recording failed. Please delete unnecessary tracks." : "⚠️ Cihaz hafızası dolmak üzere! Kayıt yapılamadı. Lütfen gereksiz kanalları silin."); if (callback) callback(null); return; } } catch(e) {} }
     const tx = db.transaction("tracks", "readwrite"); const store = tx.objectStore("tracks");
     const req = store.add({ name: name, blob: blob }); req.onsuccess = (e) => { if (callback) callback(e.target.result); };
 }
@@ -774,7 +802,7 @@ window.drawTrackWaveform = async (idx, canvasId, color) => {
 };
 
 window.deleteSingleTrack = (idx) => {
-    if(confirm("Bu kanalı silmek istediğinize emin misiniz?")) { let t = tracks[idx]; t.audio.pause(); deleteTrackFromDB(t.id); actionHistory.push({ type: 'DELETE', tracks: [t] }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if (undoBtn) { undoBtn.innerText = "↩️ Geri Al (Sil)"; undoBtn.style.display = 'inline-block'; } tracks.splice(idx, 1); renderStudioTracks(); }
+    if(confirm(window.appLang === 'en' ? "Are you sure you want to delete this track?" : "Bu kanalı silmek istediğinize emin misiniz?")) { let t = tracks[idx]; t.audio.pause(); deleteTrackFromDB(t.id); actionHistory.push({ type: 'DELETE', tracks: [t] }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if (undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Delete)" : "↩️ Geri Al (Sil)"; undoBtn.style.display = 'inline-block'; } tracks.splice(idx, 1); renderStudioTracks(); }
 };
 
 window.toggleProMode = (isChecked) => { window.isProMode = isChecked; renderStudioTracks(); };
@@ -784,11 +812,17 @@ function renderStudioTracks() {
     if (!document.getElementById('track-pulse-style')) { const style = document.createElement('style'); style.id = 'track-pulse-style'; style.innerHTML = `@keyframes softPulse { 0% { box-shadow: 0 0 0px transparent; } 50% { box-shadow: inset 0 0 20px var(--glow-color); } 100% { box-shadow: 0 0 0px transparent; } } .track-playing-pulse { animation: softPulse 2s infinite ease-in-out; }`; document.head.appendChild(style); }
     const container = document.getElementById('track-list'); const batchMenu = document.getElementById('batch-actions'); 
     if(!container || !batchMenu) return; container.innerHTML = '';
-    if(tracks.length === 0) { container.innerHTML = '<div class="empty-text" style="text-align:left;">Kayıtlı kanal yok. Yeni bir kayıt başlatın.</div>'; batchMenu.style.display = 'none'; return; }
+    
+    if(tracks.length === 0) { 
+        const emptyMsg = window.appLang === 'en' ? "No recorded tracks. Start a new recording." : "Kayıtlı kanal yok. Yeni bir kayıt başlatın.";
+        container.innerHTML = `<div class="empty-text" style="text-align:left;">${emptyMsg}</div>`; 
+        batchMenu.style.display = 'none'; return; 
+    }
     batchMenu.style.display = window.isProMode ? 'flex' : 'none'; let allSelected = true;
 
+    const tSimple = window.appLang === 'en' ? 'Simple View Active' : 'Basit Görünüm Aktif';
     const modePanel = document.createElement('div'); modePanel.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background: rgba(0,0,0,0.03); padding: 8px 12px; border-radius: 6px; border: 1px dashed var(--border);";
-    let zoomHtml = window.isProMode ? `<div style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:var(--text-muted); font-weight:bold;">🔍 Waveform Zoom:</span><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="changeDawZoom('out')">➖</button><span style="font-size:12px; font-weight:bold; color:var(--primary); min-width:30px; text-align:center;">${window.dawZoomLevel}x</span><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="changeDawZoom('in')">➕</button></div>` : `<div><span style="font-size:11px; color:var(--text-muted); font-weight:bold;">Basit Görünüm Aktif</span></div>`;
+    let zoomHtml = window.isProMode ? `<div style="display:flex; align-items:center; gap:8px;"><span style="font-size:11px; color:var(--text-muted); font-weight:bold;">🔍 Waveform Zoom:</span><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="changeDawZoom('out')">➖</button><span style="font-size:12px; font-weight:bold; color:var(--primary); min-width:30px; text-align:center;">${window.dawZoomLevel}x</span><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="changeDawZoom('in')">➕</button></div>` : `<div><span style="font-size:11px; color:var(--text-muted); font-weight:bold;">${tSimple}</span></div>`;
     modePanel.innerHTML = `${zoomHtml}<label class="switch-container" style="font-size:12px; font-weight:bold; color:var(--primary); cursor:pointer;"><input type="checkbox" onchange="toggleProMode(this.checked)" ${window.isProMode ? 'checked' : ''}><div class="switch" style="width:32px;height:18px;"></div> 🚀 Pro Mod</label>`; container.appendChild(modePanel);
 
     tracks.forEach((track, index) => {
@@ -801,78 +835,145 @@ function renderStudioTracks() {
         const checkHtml = window.isProMode ? `<input type="checkbox" style="display:inline-block;" ${track.selected ? 'checked' : ''} onchange="toggleSelectTrack(${index}, this.checked)">` : ``;
         const btnStyle = "padding:4px 10px; font-size:11px; font-weight:bold; background:var(--surface); border:1px solid var(--border); color:var(--text); transition:0.2s;";
         
+        const tVol = window.appLang === 'en' ? 'Volume' : 'Ses Seviyesi';
+        const tMute = window.appLang === 'en' ? 'Mute' : 'Sustur';
+        const tSolo = window.appLang === 'en' ? 'Solo' : 'Sadece Bunu Çal';
+        const tSettings = window.appLang === 'en' ? '⚙️ Settings ▼' : '⚙️ Ayarlar ▼';
+        const tDel = window.appLang === 'en' ? 'Delete Track' : 'Kanalı Sil';
+        const tTrim = window.appLang === 'en' ? '✂️ Trim' : '✂️ Kırp';
+        const tNorm = window.appLang === 'en' ? '🪄 Normalize' : '🪄 Gürleştir';
+        const tGate = window.appLang === 'en' ? '🔇 Noise Gate' : '🔇 Dip Ses';
+        const tSplit = window.appLang === 'en' ? '🔪 Split' : '🔪 Böl';
+        const tClone = window.appLang === 'en' ? '👯 Clone' : '👯 Klonla';
+        const tReset = window.appLang === 'en' ? '🔄 Reset' : '🔄 Sıfırla';
+        const tLow = window.appLang === 'en' ? 'Low' : 'Bas';
+        const tMid = window.appLang === 'en' ? 'Mid' : 'Mid';
+        const tHigh = window.appLang === 'en' ? 'High' : 'Tiz';
+        const tPan = window.appLang === 'en' ? 'Pan' : 'Pan';
+        const tRev = window.appLang === 'en' ? 'Reverb' : 'Yankı';
+        const tLat = window.appLang === 'en' ? 'Latency' : 'Gecikme';
+        const tLoop = window.appLang === 'en' ? 'Loop' : 'Döngü';
+        const tTrimTip = window.appLang === 'en' ? '✂️ Trim Tool: Seek to a position and click Set Position.' : '✂️ Kırpma Aracı: Sesi dilediğin yere sardır, Konumu Al butonlarına bas.';
+        const tStart = window.appLang === 'en' ? 'Start:' : 'Başlangıç:';
+        const tEnd = window.appLang === 'en' ? 'End:' : 'Bitiş:';
+        const tSet = window.appLang === 'en' ? '📍 Set' : '📍 Konumu Al';
+        const tKeep = window.appLang === 'en' ? 'Keep Selected Range' : 'Seçilen Aralığı Sakla';
+        const tDelete = window.appLang === 'en' ? 'Delete Selected Range' : 'Seçilen Aralığı Sil';
+        const tApply = window.appLang === 'en' ? '✂️ Apply' : '✂️ Uygula';
+        const tClose = window.appLang === 'en' ? 'Close' : 'Kapat';
+
         const advancedBtnsHtml = window.isProMode ? `
-            <button class="btn" style="${btnStyle} background:${track.isMuted ? 'var(--danger)' : 'var(--surface)'}; color:${track.isMuted ? 'white' : 'var(--text)'};" onclick="toggleTrackMute(${index})" title="Mute">M</button>
-            <button class="btn" style="${btnStyle} background:${track.solo ? 'var(--success)' : 'var(--surface)'}; color:${track.solo ? 'white' : 'var(--text)'};" onclick="toggleTrackSolo(${index})" title="Solo">S</button>
-            <div style="display:flex; align-items:center; gap:4px; margin:0 5px;"><input type="range" class="track-slider" style="width:50px; margin:0;" min="0" max="1" step="0.01" value="${track.audio.volume}" oninput="changeTrackVol(${index}, this.value)" title="Ses Seviyesi"><span id="vol-val-${index}" style="font-size:10px; font-weight:bold; color:var(--text-muted); min-width:20px; text-align:right;">${Math.round(track.audio.volume * 100)}</span></div>
-            <button class="btn" style="padding:4px 8px; font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer; border-radius:4px;" onclick="toggleTrackSettings(${index})" title="Kanal Ayarları ve Efektler">⚙️ Ayarlar ▼</button>
+            <button class="btn" style="${btnStyle} background:${track.isMuted ? 'var(--danger)' : 'var(--surface)'}; color:${track.isMuted ? 'white' : 'var(--text)'};" onclick="toggleTrackMute(${index})" title="${tMute}">M</button>
+            <button class="btn" style="${btnStyle} background:${track.solo ? 'var(--success)' : 'var(--surface)'}; color:${track.solo ? 'white' : 'var(--text)'};" onclick="toggleTrackSolo(${index})" title="${tSolo}">S</button>
+            <div style="display:flex; align-items:center; gap:4px; margin:0 5px;"><input type="range" class="track-slider" style="width:50px; margin:0;" min="0" max="1" step="0.01" value="${track.audio.volume}" oninput="changeTrackVol(${index}, this.value)" title="${tVol}"><span id="vol-val-${index}" style="font-size:10px; font-weight:bold; color:var(--text-muted); min-width:20px; text-align:right;">${Math.round(track.audio.volume * 100)}</span></div>
+            <button class="btn" style="padding:4px 8px; font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); cursor:pointer; border-radius:4px;" onclick="toggleTrackSettings(${index})" title="Ayarlar">${tSettings}</button>
         ` : `
-            <button class="btn" style="${btnStyle} background:${track.isMuted ? 'var(--danger)' : 'var(--surface)'}; color:${track.isMuted ? 'white' : 'var(--text)'};" onclick="toggleTrackMute(${index})" title="Sustur">M</button>
-            <button class="btn" style="${btnStyle} background:${track.solo ? 'var(--success)' : 'var(--surface)'}; color:${track.solo ? 'white' : 'var(--text)'};" onclick="toggleTrackSolo(${index})" title="Sadece Bunu Çal">S</button>
-            <div style="display:flex; align-items:center; gap:4px; margin:0 5px;"><input type="range" class="track-slider" style="width:50px; margin:0;" min="0" max="1" step="0.01" value="${track.audio.volume}" oninput="changeTrackVol(${index}, this.value)" title="Ses Seviyesi"><span id="vol-val-${index}" style="font-size:10px; font-weight:bold; color:var(--text-muted); min-width:20px; text-align:right;">${Math.round(track.audio.volume * 100)}</span></div>
-            <button class="btn" style="${btnStyle} color:var(--danger);" onclick="deleteSingleTrack(${index})" title="Kanalı Sil">🗑️</button>
+            <button class="btn" style="${btnStyle} background:${track.isMuted ? 'var(--danger)' : 'var(--surface)'}; color:${track.isMuted ? 'white' : 'var(--text)'};" onclick="toggleTrackMute(${index})" title="${tMute}">M</button>
+            <button class="btn" style="${btnStyle} background:${track.solo ? 'var(--success)' : 'var(--surface)'}; color:${track.solo ? 'white' : 'var(--text)'};" onclick="toggleTrackSolo(${index})" title="${tSolo}">S</button>
+            <div style="display:flex; align-items:center; gap:4px; margin:0 5px;"><input type="range" class="track-slider" style="width:50px; margin:0;" min="0" max="1" step="0.01" value="${track.audio.volume}" oninput="changeTrackVol(${index}, this.value)" title="${tVol}"><span id="vol-val-${index}" style="font-size:10px; font-weight:bold; color:var(--text-muted); min-width:20px; text-align:right;">${Math.round(track.audio.volume * 100)}</span></div>
+            <button class="btn" style="${btnStyle} color:var(--danger);" onclick="deleteSingleTrack(${index})" title="${tDel}">🗑️</button>
         `;
 
         const advSettingsHtml = window.isProMode ? `
             <div class="track-advanced-settings" id="track-settings-${index}" style="display:none; width:100%; margin-top:10px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.05); padding:15px; border-radius:8px; flex-direction:column; gap:15px;">
                 <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:10px;">
-                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="showTrimBox(${index})">✂️ Kırp</button>
-                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="normalizeTrack(${index})">🪄 Gürleştir</button>
-                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="noiseGateTrack(${index})">🔇 Dip Ses</button>
-                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="splitTrack(${index})">🔪 Böl</button>
-                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="cloneTrack(${index})">👯 Klonla</button>
-                    <button class="btn" style="padding:4px 10px; font-size:11px; background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3); margin-left:auto;" onclick="resetTrackSettings(${index})">🔄 Sıfırla</button>
+                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="showTrimBox(${index})">${tTrim}</button>
+                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="normalizeTrack(${index})">${tNorm}</button>
+                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="noiseGateTrack(${index})">${tGate}</button>
+                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="splitTrack(${index})">${tSplit}</button>
+                    <button class="btn" style="padding:4px 10px; font-size:11px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="cloneTrack(${index})">${tClone}</button>
+                    <button class="btn" style="padding:4px 10px; font-size:11px; background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3); margin-left:auto;" onclick="resetTrackSettings(${index})">${tReset}</button>
                 </div>
                 <div style="display:flex; flex-wrap:wrap; gap:15px; align-items:center;">
-                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">Bas <span id="eqLow-val-${index}" style="color:var(--primary);">${track.eqLow || 0}</span></div> <input type="range" class="track-slider" min="-12" max="12" step="1" value="${track.eqLow || 0}" oninput="changeTrackEQ(${index}, 'low', this.value)" style="width:60px;"></div>
-                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">Mid <span id="eqMid-val-${index}" style="color:var(--primary);">${track.eqMid || 0}</span></div> <input type="range" class="track-slider" min="-12" max="12" step="1" value="${track.eqMid || 0}" oninput="changeTrackEQ(${index}, 'mid', this.value)" style="width:60px;"></div>
-                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">Tiz <span id="eqHigh-val-${index}" style="color:var(--primary);">${track.eqHigh || 0}</span></div> <input type="range" class="track-slider" min="-12" max="12" step="1" value="${track.eqHigh || 0}" oninput="changeTrackEQ(${index}, 'high', this.value)" style="width:60px;"></div>
+                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">${tLow} <span id="eqLow-val-${index}" style="color:var(--primary);">${track.eqLow || 0}</span></div> <input type="range" class="track-slider" min="-12" max="12" step="1" value="${track.eqLow || 0}" oninput="changeTrackEQ(${index}, 'low', this.value)" style="width:60px;"></div>
+                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">${tMid} <span id="eqMid-val-${index}" style="color:var(--primary);">${track.eqMid || 0}</span></div> <input type="range" class="track-slider" min="-12" max="12" step="1" value="${track.eqMid || 0}" oninput="changeTrackEQ(${index}, 'mid', this.value)" style="width:60px;"></div>
+                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">${tHigh} <span id="eqHigh-val-${index}" style="color:var(--primary);">${track.eqHigh || 0}</span></div> <input type="range" class="track-slider" min="-12" max="12" step="1" value="${track.eqHigh || 0}" oninput="changeTrackEQ(${index}, 'high', this.value)" style="width:60px;"></div>
                     <div style="width: 1px; height: 30px; background: var(--border); opacity: 0.3; margin: 0 5px;"></div>
-                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">Pan <span id="pan-val-${index}" style="color:var(--primary);">${track.pan || 0}</span></div> <input type="range" class="track-slider" min="-1" max="1" step="0.1" value="${track.pan || 0}" oninput="changeTrackPan(${index}, this.value)" style="width:60px;"></div>
-                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">Yankı <span id="rev-val-${index}" style="color:var(--primary);">${Math.round((track.reverb || 0)*100)}</span></div> <input type="range" class="track-slider" min="0" max="1" step="0.05" value="${track.reverb || 0}" oninput="changeTrackReverb(${index}, this.value)" style="width:60px;"></div>
+                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">${tPan} <span id="pan-val-${index}" style="color:var(--primary);">${track.pan || 0}</span></div> <input type="range" class="track-slider" min="-1" max="1" step="0.1" value="${track.pan || 0}" oninput="changeTrackPan(${index}, this.value)" style="width:60px;"></div>
+                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted); min-width:45px;"><div style="display:flex; gap:3px;">${tRev} <span id="rev-val-${index}" style="color:var(--primary);">${Math.round((track.reverb || 0)*100)}</span></div> <input type="range" class="track-slider" min="0" max="1" step="0.05" value="${track.reverb || 0}" oninput="changeTrackReverb(${index}, this.value)" style="width:60px;"></div>
                     <div style="width: 1px; height: 30px; background: var(--border); opacity: 0.3; margin: 0 5px;"></div>
-                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted);">Gecikme <input type="number" style="width:50px; font-size:10px; padding:2px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.2); color:var(--text); border-radius:4px; text-align:center;" value="${track.latency || 0}" oninput="changeTrackLatency(${index}, this.value)"></div>
-                    <label class="switch-container" style="font-size:11px; margin-left:auto;"><input type="checkbox" onchange="toggleTrackLoop(${index}, this.checked)" ${track.audio.loop ? 'checked' : ''}><div class="switch" style="width:28px;height:16px;"></div> Döngü</label>
+                    <div style="display:flex; flex-direction:column; gap:2px; align-items:center; font-size:10px; font-weight:bold; color:var(--text-muted);">${tLat} <input type="number" style="width:50px; font-size:10px; padding:2px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.2); color:var(--text); border-radius:4px; text-align:center;" value="${track.latency || 0}" oninput="changeTrackLatency(${index}, this.value)"></div>
+                    <label class="switch-container" style="font-size:11px; margin-left:auto;"><input type="checkbox" onchange="toggleTrackLoop(${index}, this.checked)" ${track.audio.loop ? 'checked' : ''}><div class="switch" style="width:28px;height:16px;"></div> ${tLoop}</label>
                 </div>
             </div>
             <div class="trim-controls" id="trim-box-${index}" style="display:none; width:100%; margin-top:10px; background:rgba(34, 139, 230, 0.08); border:1px dashed var(--primary); padding:12px; border-radius:8px; font-size:11px; align-items:center; flex-wrap:wrap; gap:10px;">
-                <span style="font-weight:bold; color:var(--primary); width:100%; font-size:12px;">✂️ Kırpma Aracı: Sesi dilediğin yere sardır, 'Konumu Al' butonlarına bas.</span>
-                <div style="display:flex; align-items:center; gap:4px;">Başlangıç: <input type="number" id="trim-start-${index}" step="0.001" min="0" value="0" style="width:70px; font-size:12px; padding:4px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:4px;"> <button class="btn" style="padding:4px 8px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="document.getElementById('trim-start-${index}').value = tracks[${index}].audio.currentTime.toFixed(3)">📍 Konumu Al</button></div>
-                <div style="display:flex; align-items:center; gap:4px; margin-left: 10px;">Bitiş: <input type="number" id="trim-end-${index}" step="0.001" min="0" value="10" style="width:70px; font-size:12px; padding:4px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:4px;"> <button class="btn" style="padding:4px 8px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="document.getElementById('trim-end-${index}').value = tracks[${index}].audio.currentTime.toFixed(3)">📍 Konumu Al</button></div>
+                <span style="font-weight:bold; color:var(--primary); width:100%; font-size:12px;">${tTrimTip}</span>
+                <div style="display:flex; align-items:center; gap:4px;">${tStart} <input type="number" id="trim-start-${index}" step="0.001" min="0" value="0" style="width:70px; font-size:12px; padding:4px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:4px;"> <button class="btn" style="padding:4px 8px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="document.getElementById('trim-start-${index}').value = tracks[${index}].audio.currentTime.toFixed(3)">${tSet}</button></div>
+                <div style="display:flex; align-items:center; gap:4px; margin-left: 10px;">${tEnd} <input type="number" id="trim-end-${index}" step="0.001" min="0" value="10" style="width:70px; font-size:12px; padding:4px; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:4px;"> <button class="btn" style="padding:4px 8px; background:var(--surface); color:var(--text); border:1px solid var(--border);" onclick="document.getElementById('trim-end-${index}').value = tracks[${index}].audio.currentTime.toFixed(3)">${tSet}</button></div>
                 <div style="display:flex; justify-content:flex-end; align-items:center; flex:1; gap:10px;">
-                    <select id="trim-mode-${index}" style="font-size:12px; padding:4px; border-radius:4px; border: 1px solid var(--border); background: var(--surface); color: var(--text);"> <option value="keep" selected>Seçilen Aralığı Sakla</option> <option value="delete">Seçilen Aralığı Sil</option> </select>
-                    <button class="btn btn-add" id="trim-apply-btn-${index}" style="padding:4px 15px; background:var(--success); color:white; border:none; font-weight:bold;" onclick="executeTrim(${index})">✂️ Uygula</button> 
-                    <button class="btn" style="padding:4px 10px; background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3);" onclick="showTrimBox(${index})">Kapat</button>
+                    <select id="trim-mode-${index}" style="font-size:12px; padding:4px; border-radius:4px; border: 1px solid var(--border); background: var(--surface); color: var(--text);"> <option value="keep" selected>${tKeep}</option> <option value="delete">${tDelete}</option> </select>
+                    <button class="btn btn-add" id="trim-apply-btn-${index}" style="padding:4px 15px; background:var(--success); color:white; border:none; font-weight:bold;" onclick="executeTrim(${index})">${tApply}</button> 
+                    <button class="btn" style="padding:4px 10px; background:rgba(250,82,82,0.1); color:var(--danger); border:1px solid rgba(250,82,82,0.3);" onclick="showTrimBox(${index})">${tClose}</button>
                 </div>
             </div>
         ` : '';
 
+        const isCollapsed = track.isCollapsed || false;
+        const displayStyle = isCollapsed ? 'none' : 'flex';
+        const collapseIcon = isCollapsed ? '▶' : '▼';
+
+        const upStyle = index === 0 ? "opacity:0.3; cursor:not-allowed;" : "cursor:pointer;";
+        const downStyle = index === tracks.length - 1 ? "opacity:0.3; cursor:not-allowed;" : "cursor:pointer;";
+        const tUp = window.appLang === 'en' ? 'Move Up' : 'Yukarı Taşı';
+        const tDown = window.appLang === 'en' ? 'Move Down' : 'Aşağı Taşı';
+
         el.innerHTML = `
             <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                <div class="track-info" style="display:flex; align-items:center; gap:5px;">${checkHtml}</div>
+                <div class="track-info" style="display:flex; align-items:center; gap:5px;">
+                    <div style="display:flex; flex-direction:column; gap:2px; margin-right:5px;">
+                        <button class="btn" onclick="moveTrackUp(${index})" ${index === 0 ? 'disabled' : ''} title="${tUp}" style="padding:0px 5px; font-size:9px; background:var(--surface); border:1px solid var(--border); color:var(--text); line-height:1; min-height:14px; ${upStyle}">▲</button>
+                        <button class="btn" onclick="moveTrackDown(${index})" ${index === tracks.length - 1 ? 'disabled' : ''} title="${tDown}" style="padding:0px 5px; font-size:9px; background:var(--surface); border:1px solid var(--border); color:var(--text); line-height:1; min-height:14px; ${downStyle}">▼</button>
+                    </div>
+                    <button class="btn" onclick="toggleTrackCollapse(${index})" style="padding:2px 8px; font-size:12px; background:rgba(0,0,0,0.1); border:1px solid var(--border); color:var(--text); cursor:pointer; border-radius:4px;" id="collapse-btn-${index}">${collapseIcon}</button>
+                    ${checkHtml}
+                </div>
                 <div class="track-actions">${advancedBtnsHtml}<button class="btn btn-primary" style="padding:4px 12px; font-size:12px; min-width: 45px;" onclick="toggleTrackPlay(${index}, this)">${track.audio.paused ? '▶' : '⏸'}</button></div>
             </div>
-            ${advSettingsHtml}
-            <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px; width: 100%;">
-                <span class="track-time-label" id="time-${index}" style="min-width:55px; font-variant-numeric: tabular-nums; z-index: 2;">0:00.000</span>
-                <div style="flex: 1; overflow-x: auto; background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 4px; padding-bottom: 2px;">
-                    <div class="track-progress-container" style="position: relative; height: 40px; width: ${window.isProMode ? (window.dawZoomLevel * 100) : 100}%; min-width: 100%; display: flex; align-items: center;">
-                        <canvas id="waveform-${index}" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; border-radius: 4px;"></canvas>
-                        <input type="range" class="track-progress-bar" id="progress-${index}" min="0" max="100" value="0" step="0.01" oninput="seekTrack(${index}, this.value)" onmousedown="this.setAttribute('data-dragging', 'true')" onmouseup="this.setAttribute('data-dragging', 'false')" onmouseleave="this.setAttribute('data-dragging', 'false')" ontouchstart="this.setAttribute('data-dragging', 'true')" ontouchend="this.setAttribute('data-dragging', 'false')" style="position: relative; z-index: 2; width: 100%; height: 100%; margin: 0; background: transparent; cursor: pointer; opacity: 0.4;">
+            <div id="track-body-${index}" style="display: ${displayStyle}; flex-direction: column; width: 100%;">
+                ${advSettingsHtml}
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px; width: 100%;">
+                    <span class="track-time-label" id="time-${index}" style="min-width:55px; font-variant-numeric: tabular-nums; z-index: 2;">0:00.000</span>
+                    <div style="flex: 1; overflow-x: auto; background: rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 4px; padding-bottom: 2px;">
+                        <div class="track-progress-container" style="position: relative; height: 40px; width: ${window.isProMode ? (window.dawZoomLevel * 100) : 100}%; min-width: 100%; display: flex; align-items: center;">
+                            <canvas id="waveform-${index}" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.8; border-radius: 4px;"></canvas>
+                            <input type="range" class="track-progress-bar" id="progress-${index}" min="0" max="100" value="0" step="0.01" oninput="seekTrack(${index}, this.value)" onmousedown="this.setAttribute('data-dragging', 'true')" onmouseup="this.setAttribute('data-dragging', 'false')" onmouseleave="this.setAttribute('data-dragging', 'false')" ontouchstart="this.setAttribute('data-dragging', 'true')" ontouchend="this.setAttribute('data-dragging', 'false')" style="position: relative; z-index: 2; width: 100%; height: 100%; margin: 0; background: transparent; cursor: pointer; opacity: 0.4;">
+                        </div>
                     </div>
                 </div>
             </div>
         `;
         
         const nameInput = document.createElement('input'); nameInput.type = "text"; nameInput.className = "text-input"; nameInput.setAttribute("autocomplete", "nope"); nameInput.style.cssText = "width:140px; font-size:12px; padding:4px;"; nameInput.value = track.name; nameInput.onchange = (e) => updateTrackName(index, e.target.value); 
-        el.querySelector('.track-info').appendChild(nameInput); el.id = `track-card-${index}`; el.style.borderLeft = `5px solid ${trackColor}`; el.style.backgroundColor = `${trackColor}10`; el.style.setProperty('--glow-color', trackColor); 
+        el.querySelector('.track-info').appendChild(nameInput); 
+        el.id = `track-card-${index}`; 
+        el.style.borderLeft = `5px solid ${trackColor}`; 
+        el.style.backgroundColor = `${trackColor}10`; 
+        el.style.setProperty('--glow-color', trackColor); 
+        
         if (!track.audio.paused) el.classList.add('track-playing-pulse'); container.appendChild(el);
         setTimeout(() => { if (window.drawTrackWaveform) window.drawTrackWaveform(index, `waveform-${index}`, trackColor); }, 200);
     });
     if (window.isProMode) { const selectAllCheckbox = document.getElementById('select-all-tracks'); if(selectAllCheckbox) selectAllCheckbox.checked = allSelected && tracks.length > 0; }
 }
 
-window.toggleTrackSettings = (idx) => { const box = document.getElementById(`track-settings-${idx}`); if(box) { box.style.display = box.style.display === 'none' ? 'flex' : 'none'; } };
+window.moveTrackUp = (idx) => {
+    if (idx <= 0) return;
+    const temp = tracks[idx];
+    tracks[idx] = tracks[idx - 1];
+    tracks[idx - 1] = temp;
+    renderStudioTracks();
+};
+
+window.moveTrackDown = (idx) => {
+    if (idx >= tracks.length - 1) return;
+    const temp = tracks[idx];
+    tracks[idx] = tracks[idx + 1];
+    tracks[idx + 1] = temp;
+    renderStudioTracks();
+};
+
+window.toggleTrackCollapse = (idx) => { const body = document.getElementById(`track-body-${idx}`); const btn = document.getElementById(`collapse-btn-${idx}`); const track = tracks[idx]; if (body.style.display === 'none') { body.style.display = 'flex'; btn.innerText = '▼'; track.isCollapsed = false; const colors = ["#4dabf7", "#ff8787", "#69db7c", "#ffd43b", "#da77f2", "#ffa94d"]; if (window.drawTrackWaveform) window.drawTrackWaveform(idx, `waveform-${idx}`, colors[idx % colors.length]); } else { body.style.display = 'none'; btn.innerText = '▶'; track.isCollapsed = true; } };
+window.toggleTrackSettings = (idx) => { const body = document.getElementById(`track-body-${idx}`); const box = document.getElementById(`track-settings-${idx}`); if (body && body.style.display === 'none') { window.toggleTrackCollapse(idx); if (box) box.style.display = 'flex'; } else if (box) { box.style.display = box.style.display === 'none' ? 'flex' : 'none'; } };
 window.showTrimBox = (idx) => { const box = document.getElementById(`trim-box-${idx}`); if(box) { box.style.display = box.style.display === 'none' ? 'flex' : 'none'; if(box.style.display === 'flex') { const audio = tracks[idx].audio; document.getElementById(`trim-end-${idx}`).valueAsNumber = audio.duration ? parseFloat(audio.duration.toFixed(3)) : 0; } } };
 window.executeTrim = async (idx) => {
     window.initAudio(); const btn = document.getElementById(`trim-apply-btn-${idx}`); if(btn) { btn.innerText = "⏳..."; btn.disabled = true; }
@@ -881,7 +982,7 @@ window.executeTrim = async (idx) => {
         let startTime = parseFloat(String(rawStart).replace(',', '.')) || 0; let endTime = parseFloat(String(rawEnd).replace(',', '.')) || 0;
         const arrayBuffer = await track.blob.arrayBuffer(); const audioBuffer = await new Promise((resolve, reject) => { window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject); });
         startTime = Math.max(0, Math.min(startTime, audioBuffer.duration)); endTime = Math.max(0, Math.min(endTime, audioBuffer.duration));
-        if(startTime >= endTime || (endTime - startTime) < 0.01) { showToast("⚠️ Geçersiz kırpma aralığı!"); if(btn) { btn.innerText = "✂️ Uygula"; btn.disabled = false; } return; }
+        if(startTime >= endTime || (endTime - startTime) < 0.01) { showToast(window.appLang === 'en' ? "⚠️ Invalid trim range!" : "⚠️ Geçersiz kırpma aralığı!"); if(btn) { btn.innerText = window.appLang === 'en' ? "✂️ Apply" : "✂️ Uygula"; btn.disabled = false; } return; }
         const trimMode = document.getElementById(`trim-mode-${idx}`) ? document.getElementById(`trim-mode-${idx}`).value : 'keep'; let offlineCtx;
 
         if (trimMode === 'keep') {
@@ -892,18 +993,18 @@ window.executeTrim = async (idx) => {
             source.connect(fadeGain); fadeGain.connect(offlineCtx.destination); source.start(0, startTime, durationSafe);
         } else {
             const part1Len = startTime; const part2Len = audioBuffer.duration - endTime; const totalLen = Math.max(0.01, part1Len + part2Len); 
-            if(totalLen <= 0.01) { showToast("⚠️ Geriye ses kalmıyor!"); if(btn) { btn.innerText = "✂️ Uygula"; btn.disabled = false; } return; }
+            if(totalLen <= 0.01) { showToast(window.appLang === 'en' ? "⚠️ No audio left!" : "⚠️ Geriye ses kalmıyor!"); if(btn) { btn.innerText = window.appLang === 'en' ? "✂️ Apply" : "✂️ Uygula"; btn.disabled = false; } return; }
             const lengthBytes = Math.floor(totalLen * audioBuffer.sampleRate); offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, Math.max(1, lengthBytes), audioBuffer.sampleRate);
             if (part1Len > 0.001) { const src1 = offlineCtx.createBufferSource(); src1.buffer = audioBuffer; const fade1 = offlineCtx.createGain(); fade1.gain.setValueAtTime(1, Math.max(0, part1Len - 0.05)); fade1.gain.linearRampToValueAtTime(0, part1Len); src1.connect(fade1); fade1.connect(offlineCtx.destination); src1.start(0, 0, part1Len); }
             if (part2Len > 0.001) { const src2 = offlineCtx.createBufferSource(); src2.buffer = audioBuffer; const fade2 = offlineCtx.createGain(); fade2.gain.setValueAtTime(0, 0); fade2.gain.linearRampToValueAtTime(1, Math.min(0.05, part2Len)); src2.connect(fade2); fade2.connect(offlineCtx.destination); src2.start(part1Len, endTime, part2Len); }
         }
         const renderedBuffer = await offlineCtx.startRendering(); const wavBlob = window.audioBufferToWav(renderedBuffer);
         actionHistory.push({ type: 'TRIM', trackId: track.id, oldBlob: track.blob }); if(actionHistory.length > 3) actionHistory.shift();
-        const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = "↩️ Geri Al (Kırp)"; undoBtn.style.display = 'inline-block'; }
+        const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Trim)" : "↩️ Geri Al (Kırp)"; undoBtn.style.display = 'inline-block'; }
         track.blob = wavBlob; track.audioBufferCache = null; track.peaks = null; track.audio.pause(); URL.revokeObjectURL(track.audio.src); const url = URL.createObjectURL(wavBlob); track.audio = new Audio(url); track.routed = false;
         const tx = db.transaction("tracks", "readwrite"); const store = tx.objectStore("tracks"); store.put({ id: track.id, name: track.name, blob: wavBlob });
         setupTrackRouting(idx); renderStudioTracks();
-    } catch(e) { console.error(e); showToast("⚠️ Kırpma sırasında hata."); } finally { if(btn) { btn.innerText = "✂️ Uygula"; btn.disabled = false; } }
+    } catch(e) { console.error(e); showToast(window.appLang === 'en' ? "⚠️ Trim error." : "⚠️ Kırpma sırasında hata."); } finally { if(btn) { btn.innerText = window.appLang === 'en' ? "✂️ Apply" : "✂️ Uygula"; btn.disabled = false; } }
 };
 
 window.normalizeTrack = async (idx) => {
@@ -911,18 +1012,18 @@ window.normalizeTrack = async (idx) => {
     try {
         const arrayBuffer = await track.blob.arrayBuffer(); const buffer = await new Promise((resolve, reject) => { window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject); });
         let isSilent = true; const data = buffer.getChannelData(0); for (let i = 0; i < data.length; i+=100) { if (Math.abs(data[i]) > 0.001) { isSilent = false; break; } }
-        if (isSilent) { showToast("⚠️ Bu kanal tamamen sessiz, yükseltilecek ses bulunamadı."); if(btn) { btn.innerText = "🪄 Sesi Gürleştir"; btn.disabled = false; } return; }
+        if (isSilent) { showToast(window.appLang === 'en' ? "⚠️ This track is completely silent." : "⚠️ Bu kanal tamamen sessiz, yükseltilecek ses bulunamadı."); if(btn) { btn.innerText = window.appLang === 'en' ? "🪄 Normalize" : "🪄 Gürleştir"; btn.disabled = false; } return; }
         const offlineCtx = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate); const source = offlineCtx.createBufferSource(); source.buffer = buffer;
         const makeUpGain = offlineCtx.createGain(); makeUpGain.gain.value = 3.0; 
         const limiter = offlineCtx.createDynamicsCompressor(); limiter.threshold.value = -2; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.001; limiter.release.value = 0.05;
         source.connect(makeUpGain); makeUpGain.connect(limiter); limiter.connect(offlineCtx.destination); source.start();
         const renderedBuffer = await offlineCtx.startRendering(); const wavBlob = window.audioBufferToWav(renderedBuffer);
         actionHistory.push({ type: 'NORMALIZE', trackId: track.id, oldBlob: track.blob }); if(actionHistory.length > 3) actionHistory.shift();
-        const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = "↩️ Geri Al (Gürleştir)"; undoBtn.style.display = 'inline-block'; }
+        const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Normalize)" : "↩️ Geri Al (Gürleştir)"; undoBtn.style.display = 'inline-block'; }
         track.blob = wavBlob; track.peaks = null; track.audio.pause(); URL.revokeObjectURL(track.audio.src); track.audio = new Audio(URL.createObjectURL(wavBlob)); track.routed = false;
         const tx = db.transaction("tracks", "readwrite"); tx.objectStore("tracks").put({ id: track.id, name: track.name, blob: wavBlob });
-        setupTrackRouting(idx); renderStudioTracks(); showToast("🪄 Ses başarıyla stüdyo standartlarında güçlendirildi!");
-    } catch(e) { console.error(e); showToast("⚠️ Sesi yükseltirken hata oluştu."); } finally { if(btn) { btn.innerText = "🪄 Sesi Gürleştir"; btn.disabled = false; } }
+        setupTrackRouting(idx); renderStudioTracks(); showToast(window.appLang === 'en' ? "🪄 Audio normalized to studio standards!" : "🪄 Ses başarıyla stüdyo standartlarında güçlendirildi!");
+    } catch(e) { console.error(e); showToast(window.appLang === 'en' ? "⚠️ Error during normalization." : "⚠️ Sesi yükseltirken hata oluştu."); } finally { if(btn) { btn.innerText = window.appLang === 'en' ? "🪄 Normalize" : "🪄 Sesi Gürleştir"; btn.disabled = false; } }
 };
 
 window.noiseGateTrack = async (idx) => {
@@ -933,52 +1034,131 @@ window.noiseGateTrack = async (idx) => {
         for (let c = 0; c < buffer.numberOfChannels; c++) { const input = buffer.getChannelData(c); const output = newBuffer.getChannelData(c); let envelope = 0; for (let i = 0; i < buffer.length; i++) { if (Math.abs(input[i]) > threshold) { envelope = 1.0; } else { envelope *= 0.9995; } output[i] = input[i] * envelope; } }
         const wavBlob = window.audioBufferToWav(newBuffer);
         actionHistory.push({ type: 'NOISEGATE', trackId: track.id, oldBlob: track.blob }); if(actionHistory.length > 3) actionHistory.shift();
-        const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = "↩️ Geri Al (Temizleme)"; undoBtn.style.display = 'inline-block'; }
+        const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Gate)" : "↩️ Geri Al (Temizleme)"; undoBtn.style.display = 'inline-block'; }
         track.blob = wavBlob; track.peaks = null; track.audio.pause(); URL.revokeObjectURL(track.audio.src); track.audio = new Audio(URL.createObjectURL(wavBlob)); track.routed = false;
         const tx = db.transaction("tracks", "readwrite"); tx.objectStore("tracks").put({ id: track.id, name: track.name, blob: wavBlob });
-        setupTrackRouting(idx); renderStudioTracks(); showToast("🔇 Arka plan dip gürültüleri başarıyla temizlendi!");
-    } catch(e) { console.error(e); showToast("⚠️ Temizleme sırasında hata oluştu."); } finally { if(btn) { btn.innerText = "🔇 Dip Sesi Temizle"; btn.disabled = false; } }
+        setupTrackRouting(idx); renderStudioTracks(); showToast(window.appLang === 'en' ? "🔇 Background noise successfully cleared!" : "🔇 Arka plan dip gürültüleri başarıyla temizlendi!");
+    } catch(e) { console.error(e); showToast(window.appLang === 'en' ? "⚠️ Error during noise gating." : "⚠️ Temizleme sırasında hata oluştu."); } finally { if(btn) { btn.innerText = window.appLang === 'en' ? "🔇 Noise Gate" : "🔇 Dip Sesi Temizle"; btn.disabled = false; } }
 };
 
+// --- MP3 ENCODER KÖPRÜSÜ ---
+window.audioBufferToMp3 = function(buffer) {
+    if (typeof lamejs === 'undefined') return null;
+    const channels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 192); // 192kbps Radyo Kalitesi
+    const mp3Data = [];
+    const left = buffer.getChannelData(0);
+    const right = channels > 1 ? buffer.getChannelData(1) : left;
+    const sampleBlockSize = 1152;
+    const floatToInt = (fArray) => {
+        const iArray = new Int16Array(fArray.length);
+        for (let i = 0; i < fArray.length; i++) { let s = Math.max(-1, Math.min(1, fArray[i])); iArray[i] = s < 0 ? s * 0x8000 : s * 0x7FFF; }
+        return iArray;
+    };
+    const leftInt = floatToInt(left); const rightInt = floatToInt(right);
+    for (let i = 0; i < leftInt.length; i += sampleBlockSize) {
+        const leftChunk = leftInt.subarray(i, i + sampleBlockSize);
+        const rightChunk = rightInt.subarray(i, i + sampleBlockSize);
+        const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+        if (mp3buf.length > 0) mp3Data.push(mp3buf);
+    }
+    const mp3buf = mp3encoder.flush();
+    if (mp3buf.length > 0) mp3Data.push(mp3buf);
+    return new Blob(mp3Data, { type: 'audio/mpeg' });
+};
+
+// --- MASTERING VE SEÇİM EKRANI (MODAL) ---
 window.masterProject = async () => {
     if (typeof window.studioDatabase !== 'undefined' && window.studioDatabase) window.studioDatabase.goOffline();
-    window.initAudio(); const activeTracks = tracks.filter(t => t.selected);
-    if (activeTracks.length === 0) { showToast("⚠️ Mastering için yanındaki kutucuktan en az bir kanal seçmelisiniz."); return; }
-    const btn = document.querySelector('button[onclick="masterProject()"]'); if(btn) { btn.innerText = "⏳ Mastering..."; btn.disabled = true; }
-    try {
-        let maxDuration = 0;
-        const trackBuffers = await Promise.all(activeTracks.map(async t => { const arrayBuffer = await t.blob.arrayBuffer(); const audioBuffer = await new Promise((resolve, reject) => { window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject); }); if (audioBuffer.duration > maxDuration) maxDuration = audioBuffer.duration; const renderVol = t.audio.muted ? 0 : t.audio.volume; return { buffer: audioBuffer, pan: t.pan, reverb: t.reverb, vol: renderVol, isLoop: t.audio.loop || false, latency: t.latency || 0, eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0 }; }));
-        if(maxDuration === 0) { if(btn) { btn.innerText = "💿 Radyo Mastering"; btn.disabled = false; } return; }
-        const renderLen = maxDuration + 3.0; const sampleRate = window.audioCtx.sampleRate; const offlineCtx = new OfflineAudioContext(2, sampleRate * renderLen, sampleRate);
-        const lowShelf = offlineCtx.createBiquadFilter(); lowShelf.type = 'lowshelf'; lowShelf.frequency.value = 120; lowShelf.gain.value = 4.0;
-        const highShelf = offlineCtx.createBiquadFilter(); highShelf.type = 'highshelf'; highShelf.frequency.value = 5000; highShelf.gain.value = 4.5;
-        const busComp = offlineCtx.createDynamicsCompressor(); busComp.threshold.value = -18; busComp.knee.value = 8; busComp.ratio.value = 3.5; busComp.attack.value = 0.03; busComp.release.value = 0.25;
-        const masterGain = offlineCtx.createGain(); masterGain.gain.value = 2.2;
-        const limiter = offlineCtx.createDynamicsCompressor(); limiter.threshold.value = -1; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.1;
-        lowShelf.connect(highShelf); highShelf.connect(busComp); busComp.connect(masterGain); masterGain.connect(limiter); limiter.connect(offlineCtx.destination);
-        let length = offlineCtx.sampleRate * 2.5; let impulse = offlineCtx.createBuffer(2, length, offlineCtx.sampleRate); for (let i = 0; i < 2; i++) { let channel = impulse.getChannelData(i); for (let j = 0; j < length; j++) channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 4); }
-        let offlineReverb = offlineCtx.createConvolver(); offlineReverb.buffer = impulse; offlineReverb.connect(lowShelf); 
-        trackBuffers.forEach(tb => {
-            let source = offlineCtx.createBufferSource(); source.buffer = tb.buffer; source.loop = tb.isLoop; 
-            let eqLow = offlineCtx.createBiquadFilter(); eqLow.type = "lowshelf"; eqLow.frequency.value = 250; eqLow.gain.value = tb.eqLow;
-            let eqMid = offlineCtx.createBiquadFilter(); eqMid.type = "peaking"; eqMid.frequency.value = 1000; eqMid.Q.value = 1.0; eqMid.gain.value = tb.eqMid;
-            let eqHigh = offlineCtx.createBiquadFilter(); eqHigh.type = "highshelf"; eqHigh.frequency.value = 4000; eqHigh.gain.value = tb.eqHigh;
-            let trackVolumeNode = offlineCtx.createGain(); trackVolumeNode.gain.value = tb.vol; let panner = offlineCtx.createStereoPanner(); panner.pan.value = tb.pan || 0; let dryGain = offlineCtx.createGain(); dryGain.gain.value = 1; let wetGain = offlineCtx.createGain(); wetGain.gain.value = tb.reverb || 0;
-            source.connect(eqLow).connect(eqMid).connect(eqHigh).connect(trackVolumeNode); trackVolumeNode.connect(panner); panner.connect(dryGain).connect(lowShelf); panner.connect(wetGain).connect(offlineReverb);
-            if (tb.latency < 0) source.start(0, Math.abs(tb.latency) / 1000); else if (tb.latency > 0) source.start(tb.latency / 1000); else source.start(0);
-        });
-        const renderedBuffer = await offlineCtx.startRendering(); 
-        if(btn) btn.innerText = "⏳ MP3 Kodlanıyor...";
-        const mp3Blob = window.audioBufferToMp3 ? window.audioBufferToMp3(renderedBuffer) : window.audioBufferToWav(renderedBuffer); 
-        const a = document.createElement('a'); a.href = URL.createObjectURL(mp3Blob); a.download = `AkorStudyo_Master_${new Date().getTime()}.mp3`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 1000); 
-        showToast("💿 Mastering tamamlandı! Şarkı radyo kalitesinde indirildi.");
-    } catch (err) { console.error("Mastering Hatası:", err); showToast("⚠️ Mastering işlenirken hata oluştu."); } 
-    finally { if(btn) { btn.innerText = "💿 Radyo Mastering"; btn.disabled = false; } if (typeof window.studioDatabase !== 'undefined' && window.studioDatabase && navigator.onLine) window.studioDatabase.goOnline(); }
+    const activeTracks = tracks.filter(t => t.selected);
+    if (activeTracks.length === 0) { showToast(window.appLang === 'en' ? "⚠️ Please select at least one track to export." : "⚠️ Mastering için yanındaki kutucuktan en az bir kanal seçmelisiniz."); return; }
+
+    const title = window.appLang === 'en' ? "💿 Export Project" : "💿 Dışa Aktarma";
+    const desc = window.appLang === 'en' ? "In which format would you like to download your recording?" : "Kaydınızı hangi formatta indirmek istersiniz?";
+    const btnMp3 = window.appLang === 'en' ? "📱 MP3 (WhatsApp & Social Media)" : "📱 MP3 (WhatsApp & Sosyal Medya)";
+    const btnWav = window.appLang === 'en' ? "🎛️ WAV (Lossless Studio Quality)" : "🎛️ WAV (Kayıpsız Stüdyo Kalitesi)";
+    const btnCancel = window.appLang === 'en' ? "Cancel" : "İptal";
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay show';
+    overlay.style.zIndex = "10000";
+    overlay.innerHTML = `
+        <div class="modal-content" style="text-align:center; max-width:350px; background:#121212; border: 1px solid var(--primary); padding:20px; border-radius:10px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+            <h3 style="margin-top:0; color:var(--primary); margin-bottom: 10px;">${title}</h3>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">${desc}</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button id="btn-export-mp3" class="btn btn-add" style="padding:12px; font-weight:bold; font-size:13px; cursor:pointer;">${btnMp3}</button>
+                <button id="btn-export-wav" class="btn" style="padding:12px; background:var(--surface); border:1px solid var(--border); font-size:13px; color:white; cursor:pointer;">${btnWav}</button>
+                <button id="btn-export-cancel" class="btn" style="padding:8px; margin-top:5px; background:transparent; color:var(--danger); border:none; cursor:pointer;">${btnCancel}</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('btn-export-cancel').onclick = () => overlay.remove();
+
+    const startMastering = async (selectedFormat) => {
+        overlay.remove();
+        const btn = document.querySelector('button[onclick="masterProject()"]'); 
+        if(btn) { btn.innerText = window.appLang === 'en' ? "⏳ Encoding..." : "⏳ Mastering..."; btn.disabled = true; }
+        window.initAudio();
+        
+        try {
+            let maxDuration = 0;
+            const trackBuffers = await Promise.all(activeTracks.map(async t => { const arrayBuffer = await t.blob.arrayBuffer(); const audioBuffer = await new Promise((resolve, reject) => { window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject); }); const effDuration = audioBuffer.duration + (t.latency > 0 ? (t.latency / 1000) : 0); if (effDuration > maxDuration) maxDuration = effDuration; const renderVol = t.audio.muted ? 0 : t.audio.volume; return { buffer: audioBuffer, pan: t.pan, reverb: t.reverb, vol: renderVol, isLoop: t.audio.loop || false, latency: t.latency || 0, eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0 }; }));
+            if(maxDuration === 0) { if(btn) { btn.innerText = window.appLang === 'en' ? "💿 Radio Mastering" : "💿 Radyo Mastering"; btn.disabled = false; } return; }
+            const renderLen = maxDuration + 3.0; const sampleRate = window.audioCtx.sampleRate; const offlineCtx = new OfflineAudioContext(2, Math.ceil(sampleRate * renderLen), sampleRate);
+            const lowShelf = offlineCtx.createBiquadFilter(); lowShelf.type = 'lowshelf'; lowShelf.frequency.value = 120; lowShelf.gain.value = 4.0;
+            const highShelf = offlineCtx.createBiquadFilter(); highShelf.type = 'highshelf'; highShelf.frequency.value = 5000; highShelf.gain.value = 4.5;
+            const busComp = offlineCtx.createDynamicsCompressor(); busComp.threshold.value = -18; busComp.knee.value = 8; busComp.ratio.value = 3.5; busComp.attack.value = 0.03; busComp.release.value = 0.25;
+            const masterGain = offlineCtx.createGain(); masterGain.gain.value = 2.2;
+            const limiter = offlineCtx.createDynamicsCompressor(); limiter.threshold.value = -1; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.1;
+            lowShelf.connect(highShelf); highShelf.connect(busComp); busComp.connect(masterGain); masterGain.connect(limiter); limiter.connect(offlineCtx.destination);
+            let length = Math.ceil(offlineCtx.sampleRate * 2.5); let impulse = offlineCtx.createBuffer(2, length, offlineCtx.sampleRate); for (let i = 0; i < 2; i++) { let channel = impulse.getChannelData(i); for (let j = 0; j < length; j++) channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 4); }
+            let offlineReverb = offlineCtx.createConvolver(); offlineReverb.buffer = impulse; offlineReverb.connect(lowShelf); 
+            trackBuffers.forEach(tb => {
+                let source = offlineCtx.createBufferSource(); source.buffer = tb.buffer; source.loop = tb.isLoop; 
+                let eqLow = offlineCtx.createBiquadFilter(); eqLow.type = "lowshelf"; eqLow.frequency.value = 250; eqLow.gain.value = tb.eqLow;
+                let eqMid = offlineCtx.createBiquadFilter(); eqMid.type = "peaking"; eqMid.frequency.value = 1000; eqMid.Q.value = 1.0; eqMid.gain.value = tb.eqMid;
+                let eqHigh = offlineCtx.createBiquadFilter(); eqHigh.type = "highshelf"; eqHigh.frequency.value = 4000; eqHigh.gain.value = tb.eqHigh;
+                let trackVolumeNode = offlineCtx.createGain(); trackVolumeNode.gain.value = tb.vol; let panner = offlineCtx.createStereoPanner(); panner.pan.value = tb.pan || 0; let dryGain = offlineCtx.createGain(); dryGain.gain.value = 1; let wetGain = offlineCtx.createGain(); wetGain.gain.value = tb.reverb || 0;
+                source.connect(eqLow).connect(eqMid).connect(eqHigh).connect(trackVolumeNode); trackVolumeNode.connect(panner); panner.connect(dryGain).connect(lowShelf); panner.connect(wetGain).connect(offlineReverb);
+                if (tb.latency < 0) source.start(0, Math.abs(tb.latency) / 1000); else if (tb.latency > 0) source.start(tb.latency / 1000); else source.start(0);
+            });
+            const renderedBuffer = await offlineCtx.startRendering(); 
+            if(btn) btn.innerText = window.appLang === 'en' ? "⏳ Encoding..." : "⏳ Kodlanıyor...";
+            
+            let finalBlob, ext, mime;
+            if (selectedFormat === 'mp3' && typeof lamejs !== 'undefined') {
+                finalBlob = window.audioBufferToMp3(renderedBuffer);
+                ext = "mp3"; mime = "audio/mpeg";
+            } else {
+                if(selectedFormat === 'mp3') showToast(window.appLang === 'en' ? "⚠️ MP3 engine failed, downloading as high-quality WAV." : "⚠️ MP3 motoru yüklenemedi, yüksek kaliteli WAV olarak indiriliyor.");
+                const numChan = renderedBuffer.numberOfChannels; const rate = renderedBuffer.sampleRate;
+                const len = renderedBuffer.length * numChan; const ab = new ArrayBuffer(44 + len * 2); const dv = new DataView(ab);
+                const ws = (off, str) => { for (let i = 0; i < str.length; i++) dv.setUint8(off + i, str.charCodeAt(i)); };
+                ws(0, 'RIFF'); dv.setUint32(4, 36 + len * 2, true); ws(8, 'WAVE'); ws(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, numChan, true); dv.setUint32(24, rate, true); dv.setUint32(28, rate * numChan * 2, true); dv.setUint16(32, numChan * 2, true); dv.setUint16(34, 16, true); ws(36, 'data'); dv.setUint32(40, len * 2, true);
+                const chans = []; for (let i = 0; i < numChan; i++) chans.push(renderedBuffer.getChannelData(i));
+                let off = 44; for (let i = 0; i < renderedBuffer.length; i++) { for (let c = 0; c < numChan; c++) { let s = Math.max(-1, Math.min(1, chans[c][i])); dv.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true); off += 2; } }
+                finalBlob = new Blob([dv], { type: "audio/wav" });
+                ext = "wav"; mime = "audio/wav";
+            }
+            
+            const safeFile = new File([finalBlob], `AkorStudyo_Master_${new Date().getTime()}.${ext}`, { type: mime });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(safeFile); a.download = safeFile.name;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 1000); 
+            showToast(window.appLang === 'en' ? `💿 Export complete! (${ext.toUpperCase()}) You can share it anywhere.` : `💿 Kayıt tamamlandı! (${ext.toUpperCase()}) WhatsApp'a sürükleyebilirsin.`);
+        } catch (err) { console.error("Mastering Hatası:", err); showToast(window.appLang === 'en' ? "⚠️ An error occurred during export." : "⚠️ İşlem sırasında hata oluştu."); } 
+        finally { if(btn) { btn.innerText = window.appLang === 'en' ? "💿 Radio Mastering" : "💿 Radyo Mastering"; btn.disabled = false; } if (typeof window.studioDatabase !== 'undefined' && window.studioDatabase && navigator.onLine) window.studioDatabase.goOnline(); }
+    };
+
+    document.getElementById('btn-export-mp3').onclick = () => startMastering('mp3');
+    document.getElementById('btn-export-wav').onclick = () => startMastering('wav');
 };
 
-window.splitTrack = async (idx) => {
+window.splitTrack = async (idx) => {    
     window.initAudio(); const track = tracks[idx]; const splitTime = track.audio.currentTime;
-    if (splitTime < 0.2 || splitTime > track.audio.duration - 0.2) { showToast("⚠️ Bölmek için zaman çubuğunu (okuyucuyu) ortaya getirin."); return; }
+    if (splitTime < 0.2 || splitTime > track.audio.duration - 0.2) { showToast(window.appLang === 'en' ? "⚠️ Move the playhead to the middle to split." : "⚠️ Bölmek için zaman çubuğunu (okuyucuyu) ortaya getirin."); return; }
     const btn = document.querySelector(`#track-settings-${idx} button[onclick="splitTrack(${idx})"]`); if(btn) { btn.innerText = "⏳..."; btn.disabled = true; }
     try {
         const arrayBuffer = await track.blob.arrayBuffer(); const buffer = await new Promise((resolve, reject) => window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject)); const totalDur = buffer.duration;
@@ -987,17 +1167,17 @@ window.splitTrack = async (idx) => {
         const originalBlob = track.blob; const name1 = track.name + " (A)"; const name2 = track.name + " (B)";
         track.blob = blob1; track.name = name1; track.audioBufferCache = null; track.peaks = null; track.audio.pause(); URL.revokeObjectURL(track.audio.src); track.audio = new Audio(URL.createObjectURL(blob1)); track.routed = false;
         const tx1 = db.transaction("tracks", "readwrite"); tx1.objectStore("tracks").put({ id: track.id, name: name1, blob: blob1 }); setupTrackRouting(idx);
-        saveTrackToDB(name2, blob2, (newId) => { const url2 = URL.createObjectURL(blob2); const a2 = new Audio(url2); const newTrack = { id: newId, name: name2, blob: blob2, audio: a2, selected: false }; tracks.splice(idx + 1, 0, newTrack); setupTrackRouting(idx + 1); actionHistory.push({ type: 'SPLIT', originalTrackId: track.id, oldBlob: originalBlob, newTrackId: newId }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = "↩️ Geri Al (Bölme)"; undoBtn.style.display = 'inline-block'; } renderStudioTracks(); showToast("✂️ Kanal başarıyla ikiye bölündü!"); });
-    } catch(e) { console.error(e); showToast("⚠️ Bölme işlemi başarısız."); } finally { if(btn) { btn.innerText = "✂️ Buradan Böl"; btn.disabled = false; } }
+        saveTrackToDB(name2, blob2, (newId) => { const url2 = URL.createObjectURL(blob2); const a2 = new Audio(url2); const newTrack = { id: newId, name: name2, blob: blob2, audio: a2, selected: false }; tracks.splice(idx + 1, 0, newTrack); setupTrackRouting(idx + 1); actionHistory.push({ type: 'SPLIT', originalTrackId: track.id, oldBlob: originalBlob, newTrackId: newId }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Split)" : "↩️ Geri Al (Bölme)"; undoBtn.style.display = 'inline-block'; } renderStudioTracks(); showToast(window.appLang === 'en' ? "✂️ Track successfully split in two!" : "✂️ Kanal başarıyla ikiye bölündü!"); });
+    } catch(e) { console.error(e); showToast(window.appLang === 'en' ? "⚠️ Split failed." : "⚠️ Bölme işlemi başarısız."); } finally { if(btn) { btn.innerText = window.appLang === 'en' ? "🔪 Split" : "✂️ Buradan Böl"; btn.disabled = false; } }
 };
 
 window.cloneTrack = (idx) => {
-    const t = tracks[idx]; if (!t || !t.blob) return; const btn = document.querySelector(`#track-settings-${idx} button[onclick="cloneTrack(${idx})"]`); if(btn) { btn.innerText = "⏳..."; btn.disabled = true; } const newName = t.name + " (Kopya)";
+    const t = tracks[idx]; if (!t || !t.blob) return; const btn = document.querySelector(`#track-settings-${idx} button[onclick="cloneTrack(${idx})"]`); if(btn) { btn.innerText = "⏳..."; btn.disabled = true; } const newName = t.name + (window.appLang === 'en' ? " (Copy)" : " (Kopya)");
     saveTrackToDB(newName, t.blob, (newId) => {
         const url = URL.createObjectURL(t.blob); let a = new Audio(url); a.volume = t.audio.volume; a.loop = t.audio.loop;
         const newTrack = { id: newId, name: newName, blob: t.blob, audio: a, selected: false, pan: t.pan, reverb: t.reverb, latency: t.latency, isMuted: t.isMuted, solo: t.solo, eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0 };
         const tx = db.transaction("tracks", "readwrite"); tx.objectStore("tracks").put({ id: newId, name: newName, blob: t.blob, settings: { vol: a.volume, pan: t.pan, reverb: t.reverb, latency: t.latency, isMuted: t.isMuted, solo: t.solo, loop: a.loop, eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0 } });        
-        tracks.splice(idx + 1, 0, newTrack); setupTrackRouting(idx + 1); actionHistory.push({ type: 'CLONE', newTrackId: newId }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = "↩️ Geri Al (Klon)"; undoBtn.style.display = 'inline-block'; } renderStudioTracks(); if(typeof window.applyMuteSoloState === 'function') window.applyMuteSoloState(); if (window.showToast) showToast("👯 Kanal klonlandı! Tavsiye: Genişlik için birini sağa, diğerini sola panlayın.", 4000);
+        tracks.splice(idx + 1, 0, newTrack); setupTrackRouting(idx + 1); actionHistory.push({ type: 'CLONE', newTrackId: newId }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if(undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Clone)" : "↩️ Geri Al (Klon)"; undoBtn.style.display = 'inline-block'; } renderStudioTracks(); if(typeof window.applyMuteSoloState === 'function') window.applyMuteSoloState(); if (window.showToast) showToast(window.appLang === 'en' ? "👯 Track cloned! Tip: Pan one left and one right for width." : "👯 Kanal klonlandı! Tavsiye: Genişlik için birini sağa, diğerini sola panlayın.", 4000);
     });
 };
 
@@ -1036,7 +1216,7 @@ window.resetTrackSettings = (idx) => {
     const t = tracks[idx]; if (!t) return;
     t.audio.volume = 1.0; t.pan = 0; if (t.panNode) t.panNode.pan.value = 0; t.reverb = 0; if (t.wetGain) t.wetGain.gain.value = 0; t.eqLow = 0; t.eqMid = 0; t.eqHigh = 0; if (t.eqNodes) { t.eqNodes.low.gain.value = 0; t.eqNodes.mid.gain.value = 0; t.eqNodes.high.gain.value = 0; } t.latency = 0; t.audio.loop = false;
     window.syncTrackToDB(idx); renderStudioTracks(); 
-    setTimeout(() => { const box = document.getElementById(`track-settings-${idx}`); if(box) box.style.display = 'flex'; }, 50); if (window.showToast) showToast("🔄 Derin bir nefes al... Tüm ayarlar varsayılana sıfırlandı!", 3000);
+    setTimeout(() => { const box = document.getElementById(`track-settings-${idx}`); if(box) box.style.display = 'flex'; }, 50); if (window.showToast) showToast(window.appLang === 'en' ? "🔄 Take a deep breath... All settings reset to default!" : "🔄 Derin bir nefes al... Tüm ayarlar varsayılana sıfırlandı!", 3000);
 };
 
 window.playSelectedTracks = () => { 
@@ -1087,9 +1267,9 @@ window.stopSelectedTracks = () => {
 };
 
 window.deleteSelectedTracks = () => { 
-    const anySelected = tracks.some(t => t.selected); if (!anySelected) { if (!confirm("Hiçbir kanal seçilmedi. TÜM kanalları silmek istediğinize emin misiniz?")) return; } let recentlyDeleted = [];
+    const anySelected = tracks.some(t => t.selected); if (!anySelected) { if (!confirm(window.appLang === 'en' ? "No tracks selected. Are you sure you want to delete ALL tracks?" : "Hiçbir kanal seçilmedi. TÜM kanalları silmek istediğinize emin misiniz?")) return; } let recentlyDeleted = [];
     tracks = tracks.filter(t => { if(anySelected ? t.selected : true) { t.audio.pause(); recentlyDeleted.push(t); deleteTrackFromDB(t.id); return false; } return true; }); 
-    if(recentlyDeleted.length > 0) { actionHistory.push({ type: 'DELETE', tracks: recentlyDeleted }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if (undoBtn) { undoBtn.innerText = "↩️ Geri Al (Sil)"; undoBtn.style.display = 'inline-block'; } }
+    if(recentlyDeleted.length > 0) { actionHistory.push({ type: 'DELETE', tracks: recentlyDeleted }); if(actionHistory.length > 3) actionHistory.shift(); const undoBtn = document.getElementById('btn-undo-delete'); if (undoBtn) { undoBtn.innerText = window.appLang === 'en' ? "↩️ Undo (Delete)" : "↩️ Geri Al (Sil)"; undoBtn.style.display = 'inline-block'; } }
     renderStudioTracks(); 
 };
 
@@ -1101,16 +1281,36 @@ window.undoDelete = async () => {
         else if (lastAction.type === 'SPLIT') { const newTrackIdx = tracks.findIndex(t => t.id === lastAction.newTrackId); if (newTrackIdx !== -1) { tracks[newTrackIdx].audio.pause(); URL.revokeObjectURL(tracks[newTrackIdx].audio.src); tracks.splice(newTrackIdx, 1); deleteTrackFromDB(lastAction.newTrackId); } let origTrackIdx = tracks.findIndex(t => t.id === lastAction.originalTrackId); if (origTrackIdx !== -1) { let track = tracks[origTrackIdx]; track.blob = lastAction.oldBlob; track.name = track.name.replace(" (A)", ""); track.audioBufferCache = null; track.peaks = null; track.audio.pause(); URL.revokeObjectURL(track.audio.src); track.audio = new Audio(URL.createObjectURL(lastAction.oldBlob)); track.routed = false; const tx = db.transaction("tracks", "readwrite"); tx.objectStore("tracks").put({ id: track.id, name: track.name, blob: lastAction.oldBlob }); setupTrackRouting(origTrackIdx); } }
         else if (lastAction.type === 'CLONE') { const newTrackIdx = tracks.findIndex(t => t.id === lastAction.newTrackId); if (newTrackIdx !== -1) { tracks[newTrackIdx].audio.pause(); URL.revokeObjectURL(tracks[newTrackIdx].audio.src); tracks.splice(newTrackIdx, 1); deleteTrackFromDB(lastAction.newTrackId); } }
         renderStudioTracks();
-        const undoBtn = document.getElementById('btn-undo-delete'); if (actionHistory.length === 0) { if (undoBtn) undoBtn.style.display = 'none'; } else { let nextAction = actionHistory[actionHistory.length - 1]; let btnLabel = "↩️ Geri Al"; if (nextAction.type === 'DELETE') btnLabel = "↩️ Geri Al (Sil)"; else if (nextAction.type === 'TRIM') btnLabel = "↩️ Geri Al (Kırp)"; else if (nextAction.type === 'NORMALIZE') btnLabel = "↩️ Geri Al (Gürleştir)"; else if (nextAction.type === 'SPLIT') btnLabel = "↩️ Geri Al (Bölme)"; else if (nextAction.type === 'CLONE') btnLabel = "↩️ Geri Al (Klon)"; else if (nextAction.type === 'NOISEGATE') btnLabel = "↩️ Geri Al (Temizleme)"; if (undoBtn) undoBtn.innerText = btnLabel; }
-        if (window.showToast) { if (lastAction.type === 'DELETE') showToast("↩️ Silinen kanallar geri getirildi."); else if (lastAction.type === 'TRIM') showToast("↩️ Kırpma işlemi iptal edildi."); else if (lastAction.type === 'NORMALIZE') showToast("↩️ Ses gürleştirme iptal edildi, orijinal sese dönüldü."); else if (lastAction.type === 'SPLIT') showToast("↩️ Bölme iptal edildi, kanal eski haline birleşti."); else if (lastAction.type === 'CLONE') showToast("↩️ Klonlama iptal edildi, kopya kanal silindi."); else if (lastAction.type === 'NOISEGATE') showToast("↩️ Gürültü temizleme iptal edildi, orijinal sese dönüldü."); }
+        const undoBtn = document.getElementById('btn-undo-delete'); 
+        if (actionHistory.length === 0) { 
+            if (undoBtn) undoBtn.style.display = 'none'; 
+        } else { 
+            let nextAction = actionHistory[actionHistory.length - 1]; 
+            let btnLabel = window.appLang === 'en' ? "↩️ Undo" : "↩️ Geri Al"; 
+            if (nextAction.type === 'DELETE') btnLabel = window.appLang === 'en' ? "↩️ Undo (Delete)" : "↩️ Geri Al (Sil)"; 
+            else if (nextAction.type === 'TRIM') btnLabel = window.appLang === 'en' ? "↩️ Undo (Trim)" : "↩️ Geri Al (Kırp)"; 
+            else if (nextAction.type === 'NORMALIZE') btnLabel = window.appLang === 'en' ? "↩️ Undo (Normalize)" : "↩️ Geri Al (Gürleştir)"; 
+            else if (nextAction.type === 'SPLIT') btnLabel = window.appLang === 'en' ? "↩️ Undo (Split)" : "↩️ Geri Al (Bölme)"; 
+            else if (nextAction.type === 'CLONE') btnLabel = window.appLang === 'en' ? "↩️ Undo (Clone)" : "↩️ Geri Al (Klon)"; 
+            else if (nextAction.type === 'NOISEGATE') btnLabel = window.appLang === 'en' ? "↩️ Undo (Gate)" : "↩️ Geri Al (Temizleme)"; 
+            if (undoBtn) undoBtn.innerText = btnLabel; 
+        }
+        if (window.showToast) { 
+            if (lastAction.type === 'DELETE') showToast(window.appLang === 'en' ? "↩️ Deleted tracks restored." : "↩️ Silinen kanallar geri getirildi."); 
+            else if (lastAction.type === 'TRIM') showToast(window.appLang === 'en' ? "↩️ Trim undone." : "↩️ Kırpma işlemi iptal edildi."); 
+            else if (lastAction.type === 'NORMALIZE') showToast(window.appLang === 'en' ? "↩️ Normalize undone, reverted to original." : "↩️ Ses gürleştirme iptal edildi, orijinal sese dönüldü."); 
+            else if (lastAction.type === 'SPLIT') showToast(window.appLang === 'en' ? "↩️ Split undone, track merged back." : "↩️ Bölme iptal edildi, kanal eski haline birleşti."); 
+            else if (lastAction.type === 'CLONE') showToast(window.appLang === 'en' ? "↩️ Clone undone, copied track deleted." : "↩️ Klonlama iptal edildi, kopya kanal silindi."); 
+            else if (lastAction.type === 'NOISEGATE') showToast(window.appLang === 'en' ? "↩️ Noise gate undone, reverted to original." : "↩️ Gürültü temizleme iptal edildi, orijinal sese dönüldü."); 
+        }
     }
 };
 
 window.mixdownProject = async () => {
     if (typeof window.studioDatabase !== 'undefined' && window.studioDatabase) window.studioDatabase.goOffline();
     window.initAudio(); const activeTracks = tracks.some(t => t.selected) ? tracks.filter(t => t.selected) : tracks;
-    if (activeTracks.length === 0) { showToast("⚠️ Mixdown işlemi için en az bir kanal seçmelisiniz."); return; }
-    const btn = document.querySelector('button[onclick="mixdownProject()"]'); if(btn) { btn.innerText = "⏳ İşleniyor..."; btn.disabled = true; }
+    if (activeTracks.length === 0) { showToast(window.appLang === 'en' ? "⚠️ Please select at least one track to export." : "⚠️ Mixdown işlemi için en az bir kanal seçmelisiniz."); return; }
+    const btn = document.querySelector('button[onclick="mixdownProject()"]'); if(btn) { btn.innerText = window.appLang === 'en' ? "⏳ Processing..." : "⏳ İşleniyor..."; btn.disabled = true; }
     try {
         let maxDuration = 0; const trackBuffers = await Promise.all(activeTracks.map(async t => { const arrayBuffer = await t.blob.arrayBuffer(); const audioBuffer = await new Promise((resolve, reject) => { window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject); }); const effDuration = audioBuffer.duration + (t.latency > 0 ? (t.latency / 1000) : 0); if (effDuration > maxDuration) maxDuration = effDuration; const renderVol = t.audio.muted ? 0 : t.audio.volume; return { buffer: audioBuffer, pan: t.pan, reverb: t.reverb, vol: renderVol, isLoop: t.audio.loop || false, latency: t.latency || 0, eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0 }; }));
         if(maxDuration === 0) { if(btn) { btn.innerText = "🎛️ Mixdown (MP3)"; btn.disabled = false; } return; }
@@ -1128,16 +1328,16 @@ window.mixdownProject = async () => {
             if (tb.latency < 0) { source.start(0, Math.abs(tb.latency) / 1000); } else if (tb.latency > 0) { source.start(tb.latency / 1000); } else { source.start(0); }
         });
         const renderedBuffer = await offlineCtx.startRendering(); 
-        if(btn) btn.innerText = "⏳ MP3'e Dönüştürülüyor...";
+        if(btn) btn.innerText = window.appLang === 'en' ? "⏳ Encoding MP3..." : "⏳ MP3'e Dönüştürülüyor...";
         const mp3Blob = window.audioBufferToMp3 ? window.audioBufferToMp3(renderedBuffer) : window.audioBufferToWav(renderedBuffer);
-        const a = document.createElement('a'); a.href = URL.createObjectURL(mp3Blob); a.download = `Gitar_Atolyesi_Jam_${new Date().getTime()}.mp3`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 1000); showToast("🎛️ MP3 Mixdown başarıyla tamamlandı!");
-    } catch (err) { console.error("Mixdown Hatası:", err); showToast("⚠️ Sesi işlerken bir hata oluştu: " + err.message); } 
+        const a = document.createElement('a'); a.href = URL.createObjectURL(mp3Blob); a.download = `Gitar_Atolyesi_Jam_${new Date().getTime()}.mp3`; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 1000); showToast(window.appLang === 'en' ? "🎛️ MP3 Mixdown successfully completed!" : "🎛️ MP3 Mixdown başarıyla tamamlandı!");
+    } catch (err) { console.error("Mixdown Hatası:", err); showToast(window.appLang === 'en' ? "⚠️ An error occurred during export." : "⚠️ Sesi işlerken bir hata oluştu: " + err.message); } 
     finally { if(btn) { btn.innerText = "🎛️ Mixdown (MP3)"; btn.disabled = false; } if (typeof window.studioDatabase !== 'undefined' && window.studioDatabase && navigator.onLine) window.studioDatabase.goOnline(); }
 };
 
 window.mergeSelectedTracks = async () => {
-    window.initAudio(); const activeTracks = tracks.filter(t => t.selected); if (activeTracks.length < 2) { showToast("⚠️ Birleştirmek için en az 2 kanal seçmelisiniz."); return; }
-    const btn = document.querySelector('button[onclick="mergeSelectedTracks()"]'); if(btn) { btn.innerText = "⏳ İşleniyor..."; btn.disabled = true; }
+    window.initAudio(); const activeTracks = tracks.filter(t => t.selected); if (activeTracks.length < 2) { showToast(window.appLang === 'en' ? "⚠️ You must select at least 2 tracks to merge." : "⚠️ Birleştirmek için en az 2 kanal seçmelisiniz."); return; }
+    const btn = document.querySelector('button[onclick="mergeSelectedTracks()"]'); if(btn) { btn.innerText = window.appLang === 'en' ? "⏳ Processing..." : "⏳ İşleniyor..."; btn.disabled = true; }
     try {
         let maxDuration = 0; const trackBuffers = await Promise.all(activeTracks.map(async t => { const arrayBuffer = await t.blob.arrayBuffer(); const audioBuffer = await new Promise((resolve, reject) => { window.audioCtx.decodeAudioData(arrayBuffer, resolve, reject); }); if (audioBuffer.duration > maxDuration) maxDuration = audioBuffer.duration; const renderVol = t.audio.muted ? 0 : t.audio.volume; return { buffer: audioBuffer, pan: t.pan, reverb: t.reverb, vol: renderVol, isLoop: t.audio.loop || false, latency: t.latency || 0, eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0 }; }));
         const renderLen = maxDuration + 1.0; const currentSampleRate = window.audioCtx.sampleRate; const offlineCtx = new OfflineAudioContext(2, currentSampleRate * renderLen, currentSampleRate);
@@ -1154,13 +1354,13 @@ window.mergeSelectedTracks = async () => {
             if (tb.latency < 0) { source.start(0, Math.abs(tb.latency) / 1000); } else if (tb.latency > 0) { source.start(tb.latency / 1000); } else { source.start(0); }
         });
         const renderedBuffer = await offlineCtx.startRendering(); const wavBlob = window.audioBufferToWav(renderedBuffer);
-        const now = new Date(); const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'); const trackName = `🔗 Birleşik Kanal (${timeStr})`;
-        saveTrackToDB(trackName, wavBlob, (newId) => { const url = URL.createObjectURL(wavBlob); let a = new Audio(url); activeTracks.forEach(t => { t.selected = false; t.audio.muted = true; }); tracks.push({ id: newId, name: trackName, blob: wavBlob, audio: a, selected: true }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); window.applyMuteSoloState(); showToast("🔗 Kanallar başarıyla tek bir kanalda birleştirildi!"); });
-    } catch (err) { console.error("Birleştirme Hatası:", err); showToast("⚠️ İşlem sırasında bir hata oluştu."); } finally { if(btn) { btn.innerText = "🔗 Birleştir"; btn.disabled = false; } }
+        const now = new Date(); const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'); const trackName = window.appLang === 'en' ? `🔗 Merged Track (${timeStr})` : `🔗 Birleşik Kanal (${timeStr})`;
+        saveTrackToDB(trackName, wavBlob, (newId) => { const url = URL.createObjectURL(wavBlob); let a = new Audio(url); activeTracks.forEach(t => { t.selected = false; t.audio.muted = true; }); tracks.push({ id: newId, name: trackName, blob: wavBlob, audio: a, selected: true }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); window.applyMuteSoloState(); showToast(window.appLang === 'en' ? "🔗 Tracks successfully merged!" : "🔗 Kanallar başarıyla tek bir kanalda birleştirildi!"); });
+    } catch (err) { console.error("Birleştirme Hatası:", err); showToast(window.appLang === 'en' ? "⚠️ An error occurred." : "⚠️ İşlem sırasında bir hata oluştu."); } finally { if(btn) { btn.innerText = window.appLang === 'en' ? "🔗 Merge Tracks" : "🔗 Birleştir"; btn.disabled = false; } }
 };
-
+/* BÖLÜM 2 SONU - BURAYA KADAR KOPYALA VE YAPIŞTIR */
 const btnImportTrack = document.getElementById('btn-import-track'); const trackFileInput = document.getElementById('track-file-input');
-if(btnImportTrack && trackFileInput) { btnImportTrack.addEventListener('click', () => trackFileInput.click()); trackFileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if(!file) return; const trackName = file.name.replace(/\.[^/.]+$/, ""); hasImportedTrack = true; if (window.showToast) showToast(`⏳ ${trackName} stüdyoya alınıyor...`); saveTrackToDB(trackName, file, (newId) => { const url = URL.createObjectURL(file); let a = new Audio(url); tracks.push({ id: newId, name: trackName, blob: file, audio: a, selected: false }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); }); e.target.value = ''; }); }
+if(btnImportTrack && trackFileInput) { btnImportTrack.addEventListener('click', () => trackFileInput.click()); trackFileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if(!file) return; const trackName = file.name.replace(/\.[^/.]+$/, ""); hasImportedTrack = true; if (window.showToast) showToast(window.appLang === 'en' ? `⏳ Importing ${trackName} to studio...` : `⏳ ${trackName} stüdyoya alınıyor...`); saveTrackToDB(trackName, file, (newId) => { const url = URL.createObjectURL(file); let a = new Audio(url); tracks.push({ id: newId, name: trackName, blob: file, audio: a, selected: false }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); if (window.showToast) showToast(window.appLang === 'en' ? "✅ File successfully added to studio!" : "✅ Dosya başarıyla stüdyoya eklendi!"); }); e.target.value = ''; }); }
 
 const studioWrapper = document.getElementById('studio-panel-wrapper');
 if (studioWrapper) {
@@ -1170,9 +1370,9 @@ if (studioWrapper) {
     studioWrapper.addEventListener('drop', (e) => {
         const dt = e.dataTransfer; const files = dt.files;
         if (files && files.length > 0) {
-            const file = files[0]; if (!file.type.startsWith('audio/')) { if (window.showToast) showToast("⚠️ Hata: Sadece ses dosyaları (MP3, WAV vb.) yüklenebilir."); return; }
-            const trackName = file.name.replace(/\.[^/.]+$/, ""); hasImportedTrack = true; if (window.showToast) showToast(`⏳ ${trackName} stüdyoya alınıyor...`);
-            saveTrackToDB(trackName, file, (newId) => { const url = URL.createObjectURL(file); let a = new Audio(url); tracks.push({ id: newId, name: trackName, blob: file, audio: a, selected: false }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); if (window.showToast) showToast("✅ Dosya başarıyla stüdyoya eklendi!"); });
+            const file = files[0]; if (!file.type.startsWith('audio/')) { if (window.showToast) showToast(window.appLang === 'en' ? "⚠️ Error: Only audio files (MP3, WAV) are supported." : "⚠️ Hata: Sadece ses dosyaları (MP3, WAV vb.) yüklenebilir."); return; }
+            const trackName = file.name.replace(/\.[^/.]+$/, ""); hasImportedTrack = true; if (window.showToast) showToast(window.appLang === 'en' ? `⏳ Importing ${trackName} to studio...` : `⏳ ${trackName} stüdyoya alınıyor...`);
+            saveTrackToDB(trackName, file, (newId) => { const url = URL.createObjectURL(file); let a = new Audio(url); tracks.push({ id: newId, name: trackName, blob: file, audio: a, selected: false }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); if (window.showToast) showToast(window.appLang === 'en' ? "✅ File successfully added to studio!" : "✅ Dosya başarıyla stüdyoya eklendi!"); });
         }
     }, false);
 }
@@ -1181,13 +1381,13 @@ const btnRecTrack = document.getElementById('btn-rec-track');
 if(btnRecTrack) {
     btnRecTrack.addEventListener('click', async () => {
         const hasConsent = await window.ensureMicConsent(); if (!hasConsent) return; 
-        if (isMicOn) { isMicOn = false; if(tunerReqId) cancelAnimationFrame(tunerReqId); const tNote = document.getElementById('tuner-note'); const tInst = document.getElementById('tuner-instruction'); document.getElementById('btn-mic').innerText = "🎙️ Akort Et"; if(tNote) tNote.innerText = "--"; if(tInst) { tInst.innerText = "Kayıt için duraklatıldı"; tInst.style.color = "var(--text-muted)"; } }
+        if (isMicOn) { isMicOn = false; if(tunerReqId) cancelAnimationFrame(tunerReqId); const tNote = document.getElementById('tuner-note'); const tInst = document.getElementById('tuner-instruction'); document.getElementById('btn-mic').innerText = window.appLang === 'en' ? "🎙️ Tune" : "🎙️ Akort Et"; if(tNote) tNote.innerText = "--"; if(tInst) { tInst.innerText = window.appLang === 'en' ? "Paused for recording" : "Kayıt için duraklatıldı"; tInst.style.color = "var(--text-muted)"; } }
         const btn = document.getElementById('btn-rec-track');
         try {
             window.initAudio(); if(window.audioCtx.state === 'suspended') await window.audioCtx.resume();
             if (window.isStudioRecording) {
-                masterRecorder.stop(); window.isStudioRecording = false; btn.innerHTML = "🔴 Kaydet <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red');
-                if(window.domCache.recMeter) window.domCache.recMeter.style.width = "0%"; document.title = "Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu"; 
+                masterRecorder.stop(); window.isStudioRecording = false; btn.innerHTML = window.appLang === 'en' ? "🔴 Record <kbd class=\"kbd-badge\">K</kbd>" : "🔴 Kaydet <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red');
+                if(window.domCache.recMeter) window.domCache.recMeter.style.width = "0%"; document.title = window.appLang === 'en' ? "Guitar Workshop | Training & Pro Studio" : "Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu"; 
                 const studioPanel = document.querySelector('.studio-panel-inner'); if(studioPanel) studioPanel.classList.remove('studio-recording-glow');
                 try { micInputNode.disconnect(); } catch(e){} try { window.mixDestNode.disconnect(); } catch(e){} 
                 window.stopSelectedTracks(); if (window.isMetroOn && !window.isPlayingProgression) { document.getElementById('btn-metro').click(); } if (window.isPlayingProgression) { document.getElementById('btn-play-prog').click(); }
@@ -1195,14 +1395,20 @@ if(btnRecTrack) {
                 return;
             }
             if(!globalMicStream) { globalMicStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, sampleRate: 48000, latency: 0 } }); }
-            if (btn.getAttribute('data-counting') === 'true') { clearInterval(window.countTimer); btn.removeAttribute('data-counting'); btn.innerHTML = "🔴 Kaydet <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red'); if (window.showToast) showToast("⚠️ Kayıt başlatılmadan iptal edildi.", 2000); return; }
-            btn.setAttribute('data-counting', 'true'); let count = 4; const tickInterval = (60.0 / window.bpm) * 1000; btn.innerHTML = `⏳ Hazırlan: ${count}`; btn.classList.remove('pulse-red');
+            if (btn.getAttribute('data-counting') === 'true') { clearInterval(window.countTimer); btn.removeAttribute('data-counting'); btn.innerHTML = window.appLang === 'en' ? "🔴 Record <kbd class=\"kbd-badge\">K</kbd>" : "🔴 Kaydet <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red'); if (window.showToast) showToast(window.appLang === 'en' ? "⚠️ Recording cancelled before starting." : "⚠️ Kayıt başlatılmadan iptal edildi.", 2000); return; }
+            btn.setAttribute('data-counting', 'true'); let count = 4; const tickInterval = (60.0 / window.bpm) * 1000; btn.innerHTML = window.appLang === 'en' ? `⏳ Ready: ${count}` : `⏳ Hazırlan: ${count}`; btn.classList.remove('pulse-red');
+            if (!window.cobainMessageShown) { 
+                const title = window.appLang === 'en' ? "Pure Soul & Fast Production" : "Saf Ruh ve Hızlı Üretim";
+                const msg = window.appLang === 'en' ? "Remember Kurt Cobain's spirit: Don't spend hours tweaking, record that raw and intimate feeling of your music right now!" : "Kurt Cobain'in bağımsız ruhunu hatırla: Bilgisayar başında saatlerce ince ayar yapmadan, müziğin o ham ve samimi hissini hemen şimdi kaydet!";
+                showLegendMessage(title, msg); 
+                window.cobainMessageShown = true; 
+            }
             
             window.countTimer = setInterval(async () => {
                 if (count > 0) { 
                     let stepNum = (count === 4) ? 0 : 1; 
                     window.playClick(window.audioCtx.currentTime, stepNum, window.metroVol); 
-                    btn.innerHTML = `⏳ Hazırlan: ${count}`; 
+                    btn.innerHTML = window.appLang === 'en' ? `⏳ Ready: ${count}` : `⏳ Hazırlan: ${count}`; 
                     count--; 
                 } 
                 else {
@@ -1217,108 +1423,103 @@ if(btnRecTrack) {
                     masterRecorder = new MediaRecorder(recordingDestNode.stream, options); masterRecorder.ondataavailable = e => recChunks.push(e.data);
                     masterRecorder.onstop = () => {
                         const recordDuration = (Date.now() - window.recordingStartTime) / 1000;
-                        if (recordDuration < 1.5) { showToast("⚠️ Kayıt süresi çok kısa olduğu için iptal edildi."); return; }
-                        const blob = new Blob(recChunks, { type: options ? options.mimeType : '' }); const now = new Date(); const dateStr = now.toLocaleDateString('tr-TR'); const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'); const trackName = `🎙️ Kayıt (${dateStr} - ${timeStr})`;
+                        if (recordDuration < 1.5) { showToast(window.appLang === 'en' ? "⚠️ Recording cancelled (too short)." : "⚠️ Kayıt süresi çok kısa olduğu için iptal edildi."); return; }
+                        const blob = new Blob(recChunks, { type: options ? options.mimeType : '' }); const now = new Date(); const dateStr = now.toLocaleDateString('tr-TR'); const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0'); 
+                        const trackName = window.appLang === 'en' ? `🎙️ Record (${dateStr} - ${timeStr})` : `🎙️ Kayıt (${dateStr} - ${timeStr})`;
                         saveTrackToDB(trackName, blob, (newId) => { const url = URL.createObjectURL(blob); let a = new Audio(url); tracks.push({ id: newId, name: trackName, blob: blob, audio: a, selected: true }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); });
                     };
                     
-                    btn.innerHTML = "⏹ Kaydı Bitir <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red'); document.title = "🔴 Kaydediliyor... | Gitar Atölyesi";
+                    btn.innerHTML = window.appLang === 'en' ? "⏹ Stop Rec <kbd class=\"kbd-badge\">K</kbd>" : "⏹ Kaydı Bitir <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red'); document.title = window.appLang === 'en' ? "🔴 Recording... | Guitar Workshop" : "🔴 Kaydediliyor... | Gitar Atölyesi";
                     window.playSelectedTracks(); setTimeout(() => { window.recordingStartTime = Date.now(); masterRecorder.start(); window.isStudioRecording = true; }, 50);
-                    if (window.showToast) showToast("🔴 KAYIT BAŞLADI - ŞİMDİ ÇAL!", 2500);
+                    if (window.showToast) showToast(window.appLang === 'en' ? "🔴 RECORDING STARTED - PLAY NOW!" : "🔴 KAYIT BAŞLADI - ŞİMDİ ÇAL!", 2500);
                     const studioPanel = document.querySelector('.studio-panel-inner'); if(studioPanel) studioPanel.classList.add('studio-recording-glow');
                     if(!window.studioAnalyser) { window.studioAnalyser = window.audioCtx.createAnalyser(); window.studioAnalyser.fftSize = 512; window.audioCtx.createMediaStreamSource(globalMicStream).connect(window.studioAnalyser); }
                 }
             }, tickInterval);
-        } catch (err) { showToast("⚠️ Mikrofon erişimi reddedildi veya sağlanamadı."); console.error(err); btn.removeAttribute('data-counting'); btn.innerHTML = "🔴 Kaydet <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red'); }
+        } catch (err) { showToast(window.appLang === 'en' ? "⚠️ Microphone access denied or failed." : "⚠️ Mikrofon erişimi reddedildi veya sağlanamadı."); console.error(err); btn.removeAttribute('data-counting'); btn.innerHTML = window.appLang === 'en' ? "🔴 Record <kbd class=\"kbd-badge\">K</kbd>" : "🔴 Kaydet <kbd class=\"kbd-badge\">K</kbd>"; btn.classList.add('pulse-red'); }
     });
 }
 
 window.updateUI(true);
 
 function updateNetworkStatus() { const statusEl = document.getElementById('network-status'); if (!statusEl) return; if (navigator.onLine) { statusEl.className = 'status-indicator status-online'; statusEl.innerHTML = '🟢 Online'; } else { statusEl.className = 'status-indicator status-offline'; statusEl.innerHTML = '🔴 Offline'; } }
-window.addEventListener('offline', () => { if (window.showToast) window.showToast("📡 İnternet koptu. Çevrimdışı modda çalışıyorsunuz."); updateNetworkStatus(); });
-window.addEventListener('online', () => { if (window.showToast) window.showToast("🟢 İnternet bağlantısı tekrar sağlandı."); updateNetworkStatus(); });
+window.addEventListener('offline', () => { 
+    if (window.showToast) window.showToast(window.appLang === 'en' ? "📡 Connection lost. Working in offline mode." : "📡 İnternet koptu. Çevrimdışı modda çalışıyorsunuz."); 
+    updateNetworkStatus(); 
+    if (!window.keithMessageShown) {
+        const title = window.appLang === 'en' ? "Inspiration Needs No Internet" : "İlhamın İnterneti Olmaz";
+        const msg = window.appLang === 'en' ? "Keith Richards found the 'Satisfaction' riff half-asleep in a hotel. Even offline or on a mountain, all settings are saved; AkorStudyo keeps running. Don't miss the inspiration!" : "Keith Richards meşhur 'Satisfaction' riff'ini bir otel odasında yarı uykulu bulmuştu. İnternetin kopsa da, dağ başında olsan da tüm ayarların hafızada; AkorStudyo tam gaz çalışmaya devam ediyor. İlhamı kaçırma!";
+        showLegendMessage(title, msg);
+        window.keithMessageShown = true;
+    }
+});
+window.addEventListener('online', () => { if (window.showToast) window.showToast(window.appLang === 'en' ? "🟢 Internet connection restored." : "🟢 İnternet bağlantısı tekrar sağlandı."); updateNetworkStatus(); });
 updateNetworkStatus();
 
 const btnExportImg = document.getElementById('btn-export-img');
-if (btnExportImg) { btnExportImg.addEventListener('click', () => { if (progression.length === 0) return alert('İndirilecek akor dizisi yok!'); const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 800; canvas.height = 400; ctx.fillStyle = '#121212'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#228be6'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('GİTAR ATÖLYESİ - AKOR DİZİSİ', canvas.width / 2, 80); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 56px sans-serif'; const typeLabels = { "Maj": "", "Min": "m", "Dom7": "7", "Min7": "m7", "Maj7": "maj7", "Sus4": "sus4", "Sus2": "sus2", "Dim": "dim", "Aug": "aug", "Min7b5":"m7b5", "Maj9":"maj9", "Min9":"m9", "5":"5", "mMaj7":"m(maj7)", "Add9":"add9", "mAdd9":"m(add9)", "6":"6", "m6":"m6", "7b9":"7b9", "7#9":"7#9" }; let chordText = progression.map(p => window.notes[p.root] + (typeLabels[p.type] !== undefined ? typeLabels[p.type] : p.type)).join(' - '); ctx.fillText(chordText, canvas.width / 2, 220); ctx.fillStyle = '#495057'; ctx.font = '22px sans-serif'; ctx.fillText('Bu akor dizisi www.akorstudyo.com ile oluşturulmuştur.', canvas.width / 2, 350); const a = document.createElement('a'); a.download = 'akorstudyo-akor-karti.png'; a.href = canvas.toDataURL('image/png'); a.click(); if (window.showToast) window.showToast("🖼️ Akor kartı indirildi!"); }); }
+if (btnExportImg) { btnExportImg.addEventListener('click', () => { if (progression.length === 0) return alert(window.appLang === 'en' ? 'No chord progression to download!' : 'İndirilecek akor dizisi yok!'); const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 800; canvas.height = 400; ctx.fillStyle = '#121212'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#228be6'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(window.appLang === 'en' ? 'GUITAR WORKSHOP - CHORD PROGRESSION' : 'GİTAR ATÖLYESİ - AKOR DİZİSİ', canvas.width / 2, 80); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 56px sans-serif'; const typeLabels = { "Maj": "", "Min": "m", "Dom7": "7", "Min7": "m7", "Maj7": "maj7", "Sus4": "sus4", "Sus2": "sus2", "Dim": "dim", "Aug": "aug", "Min7b5":"m7b5", "Maj9":"maj9", "Min9":"m9", "5":"5", "mMaj7":"m(maj7)", "Add9":"add9", "mAdd9":"m(add9)", "6":"6", "m6":"m6", "7b9":"7b9", "7#9":"7#9" }; let chordText = progression.map(p => window.notes[p.root] + (typeLabels[p.type] !== undefined ? typeLabels[p.type] : p.type)).join(' - '); ctx.fillText(chordText, canvas.width / 2, 220); ctx.fillStyle = '#495057'; ctx.font = '22px sans-serif'; ctx.fillText(window.appLang === 'en' ? 'Generated with www.akorstudyo.com' : 'Bu akor dizisi www.akorstudyo.com ile oluşturulmuştur.', canvas.width / 2, 350); const a = document.createElement('a'); a.download = 'akorstudyo-akor-karti.png'; a.href = canvas.toDataURL('image/png'); a.click(); if (window.showToast) window.showToast(window.appLang === 'en' ? "🖼️ Chord card downloaded!" : "🖼️ Akor kartı indirildi!"); }); }
 
 const backingTrackSelect = document.getElementById('backing-track-select');
-if (backingTrackSelect) { backingTrackSelect.addEventListener('change', async (e) => { const url = e.target.value; if (!url) return; const trackName = e.target.options[e.target.selectedIndex].text.replace(/^[^\w\s]+/, '').trim(); if (window.showToast) window.showToast(`⏳ ${trackName} indiriliyor...`); e.target.disabled = true; try { const response = await fetch(url); if (!response.ok) throw new Error("Dosya bulunamadı"); const blob = await response.blob(); hasImportedTrack = true; saveTrackToDB(trackName, blob, (newId) => { const blobUrl = URL.createObjectURL(blob); let a = new Audio(blobUrl); tracks.push({ id: newId, name: trackName, blob: blob, audio: a, selected: true }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); if (window.showToast) window.showToast(`✅ ${trackName} stüdyoya eklendi!`); }); } catch (err) { if (window.showToast) window.showToast("⚠️ Altyapı yüklenemedi. MP3 dosyaları eksik olabilir."); } finally { e.target.disabled = false; e.target.value = ""; } }); }
+if (backingTrackSelect) { backingTrackSelect.addEventListener('change', async (e) => { const url = e.target.value; if (!url) return; const trackName = e.target.options[e.target.selectedIndex].text.replace(/^[^\w\s]+/, '').trim(); if (window.showToast) window.showToast(window.appLang === 'en' ? `⏳ Downloading ${trackName}...` : `⏳ ${trackName} indiriliyor...`); e.target.disabled = true; try { const response = await fetch(url); if (!response.ok) throw new Error("Dosya bulunamadı"); const blob = await response.blob(); hasImportedTrack = true; saveTrackToDB(trackName, blob, (newId) => { const blobUrl = URL.createObjectURL(blob); let a = new Audio(blobUrl); tracks.push({ id: newId, name: trackName, blob: blob, audio: a, selected: true }); setupTrackRouting(tracks.length - 1); renderStudioTracks(); if (window.showToast) window.showToast(window.appLang === 'en' ? `✅ ${trackName} added to studio!` : `✅ ${trackName} stüdyoya eklendi!`); }); } catch (err) { if (window.showToast) window.showToast(window.appLang === 'en' ? "⚠️ Backing track failed to load. MP3 might be missing." : "⚠️ Altyapı yüklenemedi. MP3 dosyaları eksik olabilir."); } finally { e.target.disabled = false; e.target.value = ""; } }); }
 
-const btnFocusMode = document.getElementById('btn-focus-mode'); if (btnFocusMode) { btnFocusMode.addEventListener('click', () => { document.body.classList.toggle('focus-mode'); if (document.body.classList.contains('focus-mode')) { btnFocusMode.innerHTML = "👁️ Odaktan Çık"; btnFocusMode.style.background = "var(--danger)"; if (window.showToast) showToast("🧘 Odak Modu Aktif: Sadece açık paneller ekranda."); } else { btnFocusMode.innerHTML = "🧘 Odak"; btnFocusMode.style.background = "var(--primary)"; if (window.showToast) showToast("Odak Modu Kapatıldı."); } }); }
-const btnResetLayout = document.getElementById('btn-reset-layout'); if (btnResetLayout) { btnResetLayout.addEventListener('click', () => { const userConfirmed = confirm("Panellerin görünüm sırası ilk açılış haline döndürülecek.\n\n⚠️ Merak etmeyin: Yaptığınız stüdyo kayıtları, metronom ayarları veya akor dizileriniz KESİNLİKLE SİLİNMEYECEKTİR.\n\nOnaylıyor musunuz?"); if (userConfirmed) { localStorage.removeItem('gitar_panel_order'); const btnResetLayout = document.getElementById('btn-reset-layout'); if (btnResetLayout) { btnResetLayout.addEventListener('click', () => { const userConfirmed = confirm("Panellerin görünüm sırası ilk açılış haline döndürülecek.\n\n⚠️ Merak etmeyin: Yaptığınız stüdyo kayıtları, metronom ayarları veya akor dizileriniz KESİNLİKLE SİLİNMEYECEKTİR.\n\nOnaylıyor musunuz?"); if (userConfirmed) { localStorage.removeItem('gitar_panel_order'); const defaultOrder = ['fretboard-panel', 'controls-panel-wrapper', 'song-tutor-panel', 'scale-assistant', 'tools-panel-wrapper', 'studio-panel-wrapper']; const sortableContainer = document.getElementById('sortable-list'); if (sortableContainer) { defaultOrder.forEach(panelId => { const panelElement = document.getElementById(panelId); if (panelElement) { sortableContainer.appendChild(panelElement); } }); } if (window.showToast) showToast("🧹 Arayüz düzeni sıfırlandı. Verileriniz güvende!"); } }); } const sortableContainer = document.getElementById('sortable-list'); if (sortableContainer) { defaultOrder.forEach(panelId => { const panelElement = document.getElementById(panelId); if (panelElement) { sortableContainer.appendChild(panelElement); } }); } if (window.showToast) showToast("🧹 Arayüz düzeni sıfırlandı. Verileriniz güvende!"); } }); }
+const btnFocusMode = document.getElementById('btn-focus-mode'); if (btnFocusMode) { btnFocusMode.addEventListener('click', () => { document.body.classList.toggle('focus-mode'); if (document.body.classList.contains('focus-mode')) { btnFocusMode.innerHTML = window.appLang === 'en' ? "👁️ Exit Focus" : "👁️ Odaktan Çık"; btnFocusMode.style.background = "var(--danger)"; if (window.showToast) showToast(window.appLang === 'en' ? "🧘 Focus Mode Active: Only open panels are visible." : "🧘 Odak Modu Aktif: Sadece açık paneller ekranda."); } else { btnFocusMode.innerHTML = window.appLang === 'en' ? "🧘 Focus" : "🧘 Odak"; btnFocusMode.style.background = "var(--primary)"; if (window.showToast) showToast(window.appLang === 'en' ? "Focus Mode Disabled." : "Odak Modu Kapatıldı."); } }); }
+const btnResetLayout = document.getElementById('btn-reset-layout'); if (btnResetLayout) { btnResetLayout.addEventListener('click', () => { const userConfirmed = confirm(window.appLang === 'en' ? "Reset panel layout to default?\n\n⚠️ Your recordings and metronome/chord settings WILL NOT be deleted.\n\nConfirm?" : "Panellerin görünüm sırası ilk açılış haline döndürülecek.\n\n⚠️ Merak etmeyin: Yaptığınız stüdyo kayıtları, metronom ayarları veya akor dizileriniz KESİNLİKLE SİLİNMEYECEKTİR.\n\nOnaylıyor musunuz?"); if (userConfirmed) { localStorage.removeItem('gitar_panel_order'); const defaultOrder = ['fretboard-panel', 'controls-panel-wrapper', 'song-tutor-panel', 'scale-assistant', 'tools-panel-wrapper', 'studio-panel-wrapper']; const sortableContainer = document.getElementById('sortable-list'); if (sortableContainer) { defaultOrder.forEach(panelId => { const panelElement = document.getElementById(panelId); if (panelElement) { sortableContainer.appendChild(panelElement); } }); } if (window.showToast) showToast(window.appLang === 'en' ? "🧹 Layout reset. Your data is safe!" : "🧹 Arayüz düzeni sıfırlandı. Verileriniz güvende!"); } }); }
 const btnClearMemory = document.getElementById('btn-clear-memory'); 
 if (btnClearMemory) { 
     btnClearMemory.addEventListener('click', () => { 
-        // Sitenin o anki dilini kontrol et
-        const isEn = document.getElementById('lang-select') && document.getElementById('lang-select').value === 'en';
-        
+        const isEn = window.appLang === 'en';
         const confirmMsg = isEn 
             ? "⚠️ WARNING!\n\nAll your studio recordings (WAV) and saved chord/metronome memory in the browser will be completely deleted.\n\nThis action cannot be undone. Do you confirm?" 
             : "⚠️ DİKKAT!\n\nStüdyodaki tüm kayıtlarınız (WAV) ve tarayıcıya kaydedilen akor/metronom hafızanız tamamen silinecektir.\n\nBu işlem geri alınamaz. Onaylıyor musunuz?";
-            
         const isConfirmed = confirm(confirmMsg); 
         
         if (isConfirmed) { 
-            if (typeof db !== 'undefined' && db) { 
-                const tx = db.transaction("tracks", "readwrite"); 
-                const store = tx.objectStore("tracks"); 
-                store.clear(); 
-            } 
-            localStorage.removeItem('gitar_session'); 
-            localStorage.removeItem('gitar_panel_order'); 
-            localStorage.removeItem('gitar_theme'); 
-            localStorage.removeItem('gitar_lefty'); 
-            localStorage.removeItem('gitar_vis_metro'); 
-            localStorage.removeItem('gitar_cookie_consent'); 
+            if (typeof db !== 'undefined' && db) { const tx = db.transaction("tracks", "readwrite"); const store = tx.objectStore("tracks"); store.clear(); } 
+            localStorage.removeItem('gitar_session'); localStorage.removeItem('gitar_panel_order'); localStorage.removeItem('gitar_theme'); localStorage.removeItem('gitar_lefty'); localStorage.removeItem('gitar_vis_metro'); localStorage.removeItem('gitar_cookie_consent'); 
             tracks.forEach(t => { if (t.audio) { t.audio.pause(); t.audio.src = ""; } }); 
-            
-            const alertMsg = isEn 
-                ? "🧹 Memory and all audio tracks successfully cleared. Application is restarting..." 
-                : "🧹 Hafıza ve tüm ses kayıtları başarıyla temizlendi. Uygulama yeniden başlatılıyor...";
-            
-            alert(alertMsg); 
-            window.location.reload(); 
+            const alertMsg = isEn ? "🧹 Memory and all audio tracks successfully cleared. Application is restarting..." : "🧹 Hafıza ve tüm ses kayıtları başarıyla temizlendi. Uygulama yeniden başlatılıyor...";
+            alert(alertMsg); window.location.reload(); 
         } 
     }); 
 }
 
 window.toggleChordProMode = (isPro) => { 
-    const advWrapper = document.getElementById('advanced-controls-wrapper'); 
-    const btnAddProg = document.getElementById('btn-add-prog'); 
-    const proChords = document.querySelectorAll('.pro-chord'); 
-    const typeSelect = document.getElementById('type-select'); 
-    if (isPro) { 
-        advWrapper.style.display = 'block'; 
-        if(btnAddProg) btnAddProg.style.display = 'inline-block'; 
-        proChords.forEach(opt => opt.style.display = 'block'); 
-    } else { 
-        advWrapper.style.display = 'none'; 
-        if(btnAddProg) btnAddProg.style.display = 'none'; 
-        proChords.forEach(opt => opt.style.display = 'none'); 
-        const selectedOpt = typeSelect.options[typeSelect.selectedIndex]; 
-        if (selectedOpt && selectedOpt.classList.contains('pro-chord')) { 
-            typeSelect.value = 'Min'; typeSelect.dispatchEvent(new Event('change')); 
-        } 
-    } 
+    const advWrapper = document.getElementById('advanced-controls-wrapper'); const btnAddProg = document.getElementById('btn-add-prog'); const proChords = document.querySelectorAll('.pro-chord'); const typeSelect = document.getElementById('type-select'); 
+    if (isPro) { advWrapper.style.display = 'block'; if(btnAddProg) btnAddProg.style.display = 'inline-block'; proChords.forEach(opt => opt.style.display = 'block'); } else { advWrapper.style.display = 'none'; if(btnAddProg) btnAddProg.style.display = 'none'; proChords.forEach(opt => opt.style.display = 'none'); const selectedOpt = typeSelect.options[typeSelect.selectedIndex]; if (selectedOpt && selectedOpt.classList.contains('pro-chord')) { typeSelect.value = 'Min'; typeSelect.dispatchEvent(new Event('change')); } } 
 };
 window.toggleMetroProMode = (isPro) => { const advWrapper = document.getElementById('advanced-metro-wrapper'); if (isPro) { advWrapper.style.display = 'block'; } else { advWrapper.style.display = 'none'; const speedTrainer = document.getElementById('speed-trainer-toggle'); if (speedTrainer && speedTrainer.checked) { speedTrainer.checked = false; speedTrainer.dispatchEvent(new Event('change')); } } };
 window.toggleScaleProMode = (isPro) => { const advWrapper = document.getElementById('advanced-scale-wrapper'); const advScaleSelect = document.getElementById('adv-scale-select'); const scalePosSelect = document.getElementById('scale-position-select'); const scalePatternBox = document.getElementById('scale-pattern-box'); if (isPro) { advWrapper.style.display = 'block'; if (scalePatternBox) scalePatternBox.style.display = 'flex'; } else { advWrapper.style.display = 'none'; let needsRedraw = false; if (advScaleSelect && advScaleSelect.value !== 'auto') { advScaleSelect.value = 'auto'; needsRedraw = true; } if (scalePosSelect && scalePosSelect.value !== 'pos1') { scalePosSelect.value = 'pos1'; needsRedraw = true; } if (needsRedraw && typeof viewingScaleMode !== 'undefined' && viewingScaleMode) { drawScaleFretboard(); updateScaleAssistant(); } } };
 
-window.ensureMicConsent = function() { return new Promise((resolve) => { if (localStorage.getItem('gitar_mic_consent') === 'true') { resolve(true); return; } const overlay = document.createElement('div'); overlay.className = 'modal-overlay show'; overlay.style.zIndex = "10000"; overlay.innerHTML = `<div class="modal-content" style="text-align:center; max-width:400px;"><h3 style="margin-top:0; color:var(--primary);">🎙️ Mikrofon İzni Gerekli</h3><p style="font-size:14px; line-height:1.6; color:var(--text);">Stüdyo kayıtları ve akıllı akort cihazının çalışabilmesi için mikrofonunuza erişmemiz gerekiyor.<br><br><b>🔒 Gizlilik ve Güvenlik:</b> Sesiniz asla internete yüklenmez veya sunuculara aktarılmaz. Tüm analiz ve kayıt işlemleri sadece sizin cihazınızda (çevrimdışı) gerçekleşir.</p><div style="display:flex; gap:10px; justify-content:center; margin-top:20px;"><button id="btn-consent-cancel" class="btn" style="flex:1;">İptal</button><button id="btn-consent-ok" class="btn btn-add" style="flex:1;">Anladım, İzin Ver</button></div></div>`; document.body.appendChild(overlay); document.getElementById('btn-consent-cancel').onclick = () => { overlay.remove(); resolve(false); }; document.getElementById('btn-consent-ok').onclick = () => { localStorage.setItem('gitar_mic_consent', 'true'); overlay.remove(); resolve(true); }; }); };
+window.ensureMicConsent = function() { return new Promise((resolve) => { if (localStorage.getItem('gitar_mic_consent') === 'true') { resolve(true); return; } 
+    const title = window.appLang === 'en' ? "🎙️ Microphone Permission Required" : "🎙️ Mikrofon İzni Gerekli";
+    const text = window.appLang === 'en' ? "We need access to your microphone for studio recordings and the smart tuner to work.<br><br><b>🔒 Privacy and Security:</b> Your voice is never uploaded to the internet or transferred to servers. All analysis and recording processes happen purely on your device (offline)." : "Stüdyo kayıtları ve akıllı akort cihazının çalışabilmesi için mikrofonunuza erişmemiz gerekiyor.<br><br><b>🔒 Gizlilik ve Güvenlik:</b> Sesiniz asla internete yüklenmez veya sunuculara aktarılmaz. Tüm analiz ve kayıt işlemleri sadece sizin cihazınızda (çevrimdışı) gerçekleşir.";
+    const btnCancel = window.appLang === 'en' ? "Cancel" : "İptal";
+    const btnOk = window.appLang === 'en' ? "I Understand, Allow" : "Anladım, İzin Ver";
+    
+    const overlay = document.createElement('div'); overlay.className = 'modal-overlay show'; overlay.style.zIndex = "10000"; overlay.innerHTML = `<div class="modal-content" style="text-align:center; max-width:400px;"><h3 style="margin-top:0; color:var(--primary);">${title}</h3><p style="font-size:14px; line-height:1.6; color:var(--text);">${text}</p><div style="display:flex; gap:10px; justify-content:center; margin-top:20px;"><button id="btn-consent-cancel" class="btn" style="flex:1;">${btnCancel}</button><button id="btn-consent-ok" class="btn btn-add" style="flex:1;">${btnOk}</button></div></div>`; document.body.appendChild(overlay); document.getElementById('btn-consent-cancel').onclick = () => { overlay.remove(); resolve(false); }; document.getElementById('btn-consent-ok').onclick = () => { localStorage.setItem('gitar_mic_consent', 'true'); overlay.remove(); resolve(true); }; }); };
 
 window.renderAiSuggestions = function() {
     if (!timelineEl) return; let aiContainer = document.getElementById('ai-suggestion-box');
     if (!aiContainer) { aiContainer = document.createElement('div'); aiContainer.id = 'ai-suggestion-box'; aiContainer.style.cssText = "margin-top: 15px; padding: 12px; background: rgba(32, 201, 151, 0.05); border: 1px dashed #20c997; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;"; timelineEl.parentNode.insertBefore(aiContainer, timelineEl.nextSibling); }
     if (progression.length === 0) { aiContainer.style.display = 'none'; return; }
     aiContainer.style.display = 'flex'; const lastChord = progression[progression.length - 1]; let suggestions = []; const root = lastChord.root;
-    if (lastChord.type.includes("Maj") || lastChord.type === "5") { suggestions.push({ r: (root + 5) % 12, t: "Maj", label: "🌟 Tamamlayıcı (IV)" }); suggestions.push({ r: (root + 7) % 12, t: "Maj", label: "🔥 Çözücü (V)" }); suggestions.push({ r: (root + 9) % 12, t: "Min", label: "🌧️ Hüzünlü (vi)" }); suggestions.push({ r: (root + 2) % 12, t: "Min", label: "🌉 Geçiş (ii)" }); } 
-    else { suggestions.push({ r: (root + 8) % 12, t: "Maj", label: "☀️ Yükseliş (VI)" }); suggestions.push({ r: (root + 10) % 12, t: "Maj", label: "⚡ Güçlü (VII)" }); suggestions.push({ r: (root + 5) % 12, t: "Min", label: "🌌 Karanlık (iv)" }); suggestions.push({ r: (root + 7) % 12, t: "Min", label: "⚓ Kararlı (v)" }); }
+    
+    const tComp = window.appLang === 'en' ? "🌟 Companion (IV)" : "🌟 Tamamlayıcı (IV)";
+    const tRes = window.appLang === 'en' ? "🔥 Resolver (V)" : "🔥 Çözücü (V)";
+    const tSad = window.appLang === 'en' ? "🌧️ Sad (vi)" : "🌧️ Hüzünlü (vi)";
+    const tTrans = window.appLang === 'en' ? "🌉 Transition (ii)" : "🌉 Geçiş (ii)";
+    const tRise = window.appLang === 'en' ? "☀️ Rising (VI)" : "☀️ Yükseliş (VI)";
+    const tStrong = window.appLang === 'en' ? "⚡ Strong (VII)" : "⚡ Güçlü (VII)";
+    const tDark = window.appLang === 'en' ? "🌌 Dark (iv)" : "🌌 Karanlık (iv)";
+    const tStable = window.appLang === 'en' ? "⚓ Stable (v)" : "⚓ Kararlı (v)";
+
+    if (lastChord.type.includes("Maj") || lastChord.type === "5") { suggestions.push({ r: (root + 5) % 12, t: "Maj", label: tComp }); suggestions.push({ r: (root + 7) % 12, t: "Maj", label: tRes }); suggestions.push({ r: (root + 9) % 12, t: "Min", label: tSad }); suggestions.push({ r: (root + 2) % 12, t: "Min", label: tTrans }); } 
+    else { suggestions.push({ r: (root + 8) % 12, t: "Maj", label: tRise }); suggestions.push({ r: (root + 10) % 12, t: "Maj", label: tStrong }); suggestions.push({ r: (root + 5) % 12, t: "Min", label: tDark }); suggestions.push({ r: (root + 7) % 12, t: "Min", label: tStable }); }
+    
     const typeLabels = { "Maj": "", "Min": "m", "Dom7": "7", "Min7": "m7", "Maj7": "maj7" }; const lastChordName = window.notes[lastChord.root] + (typeLabels[lastChord.type] !== undefined ? typeLabels[lastChord.type] : lastChord.type);
-    aiContainer.innerHTML = `<div style="font-size: 13px; color: #20c997;">🤖 <b>Akor Pusulası Önerisi:</b> <span>${lastChordName}</span> akorundan sonra şunlar harika gider:</div>`;
+    aiContainer.innerHTML = `<div style="font-size: 13px; color: #20c997;">🤖 <b>${window.appLang === 'en' ? 'Chord Compass Suggestion:' : 'Akor Pusulası Önerisi:'}</b> <span>${lastChordName}</span> ${window.appLang === 'en' ? 'sounds great followed by:' : 'akorundan sonra şunlar harika gider:'}</div>`;
     const btnContainer = document.createElement('div'); btnContainer.style.cssText = "display: flex; gap: 8px; flex-wrap: wrap;";
-    suggestions.forEach(sug => { const chordName = window.notes[sug.r] + (sug.t === "Min" ? "m" : ""); const btn = document.createElement('button'); btn.className = 'btn'; btn.style.cssText = "background: #2b3035; color: #20c997; border: 1px solid #20c997; font-size: 12px; padding: 6px 12px; border-radius: 6px; cursor: pointer;"; btn.innerHTML = `<b>${chordName}</b> <span style="font-size:10px; color:var(--text-muted); margin-left:4px;">${sug.label}</span>`; btn.onclick = () => { progression.push({ root: sug.r, type: sug.t, shape: window.generateVariations(sug.r, sug.t)[0] }); window.currentProgTitle = "🎸 Özel Akor Kombinasyonu"; renderProgression(); saveSession(); }; btn.onmouseover = () => btn.style.background = "#20c99733"; btn.onmouseout = () => btn.style.background = "#2b3035"; btnContainer.appendChild(btn); });
+    suggestions.forEach(sug => { const chordName = window.notes[sug.r] + (sug.t === "Min" ? "m" : ""); const btn = document.createElement('button'); btn.className = 'btn'; btn.style.cssText = "background: #2b3035; color: #20c997; border: 1px solid #20c997; font-size: 12px; padding: 6px 12px; border-radius: 6px; cursor: pointer;"; btn.innerHTML = `<b>${chordName}</b> <span style="font-size:10px; color:var(--text-muted); margin-left:4px;">${sug.label}</span>`; btn.onclick = () => { progression.push({ root: sug.r, type: sug.t, shape: window.generateVariations(sug.r, sug.t)[0] }); window.currentProgTitle = window.appLang === 'en' ? "🎸 Custom Chord Combination" : "🎸 Özel Akor Kombinasyonu"; renderProgression(); saveSession(); }; btn.onmouseover = () => btn.style.background = "#20c99733"; btn.onmouseout = () => btn.style.background = "#2b3035"; btnContainer.appendChild(btn); });
     aiContainer.appendChild(btnContainer);
 };
 
@@ -1565,7 +1766,11 @@ window.translateDOM = function(node) {
                     .replace(/🎤 Şarkı Öğren & Akor Dizisi/g, "🎤 Learn Song & Chord Progression")
                     .replace(/Şarkı Adı/g, "Song Title")
                     .replace(/Şarkı Öğren \(Canlı Demo\):/g, "Learn Song (Live Demo):")
-                    .replace(/Çevrimdışı veritabanı ile yüzlerce popüler şarkının sözlerini ve akorlarını interaktif klavyede çalarak öğrenin\./g, "Learn lyrics and chords of hundreds of popular songs on the interactive fretboard with the offline database.");
+                    .replace(/Çevrimdışı veritabanı ile yüzlerce popüler şarkının sözlerini ve akorlarını interaktif klavyede çalarak öğrenin\./g, "Learn lyrics and chords of hundreds of popular songs on the interactive fretboard with the offline database.")
+                    .replace(/KAYITTA/g, "RECORDING")
+                    .replace(/Tertemiz ve güçlü bir ses elde etmek için mutlaka /g, "To get a clean and powerful sound, always use ")
+                    .replace(/ ile bağlayın\./g, ".")
+                    .replace(/Henüz akor eklenmedi\. \(1, 2, 3\.\.\. tuşlarıyla canlı çalabilirsin\)/g, "No chords added yet. (You can play live with 1, 2, 3... keys)");
 
                 if (newText.includes("Adım ") && newText.includes("Sıradaki Akor")) {
                     newText = newText.replace("Adım", "Step").replace("Sıradaki Akor", "Next Chord");
@@ -1627,12 +1832,12 @@ window.applyTranslations = function() {
             if (key === 'header_title') el.innerHTML = "🎸 Guitar Workshop | Training & Pro Studio";
             if (key === 'midi_waiting') el.innerHTML = "🎹 Awaiting MIDI";
             if (key === 'metro_active') el.innerHTML = "🥁 Metronome Active";
-            if (key === 'status_online') el.innerHTML = "🟢 Online";
+            if (key === 'status_online') el.innerHTML = navigator.onLine ? "🟢 Online" : "🔴 Offline";
         } else {
             if (key === 'header_title') el.innerHTML = "🎸 Gitar Atölyesi | Eğitim & Pro Kayıt Stüdyosu";
             if (key === 'midi_waiting') el.innerHTML = "🎹 MIDI Bekleniyor";
             if (key === 'metro_active') el.innerHTML = "🥁 Metronom Aktif";
-            if (key === 'status_online') el.innerHTML = "🟢 Online";
+            if (key === 'status_online') el.innerHTML = navigator.onLine ? "🟢 Online" : "🔴 Offline";
         }
     });
 
@@ -1670,16 +1875,23 @@ if (langSelect) {
     langSelect.value = window.appLang;
     
     langSelect.addEventListener('change', (e) => {
-        window.appLang = e.target.value;
-        localStorage.setItem('gitar_lang', window.appLang);
-        window.applyTranslations();
-        if(window.showToast) window.showToast(window.appLang === 'tr' ? "🇹🇷 Dil Türkçe oldu." : "🇬🇧 UI translated to English.", 2000);
-        
-        const gameIframe = document.getElementById('game-iframe');
-        if(gameIframe && gameIframe.contentDocument) {
-            window.translateDOM(gameIframe.contentDocument.body);
-        }
-    });
+                window.appLang = e.target.value;
+                localStorage.setItem('gitar_lang', window.appLang);
+                window.applyTranslations();
+                if(window.showToast) window.showToast(window.appLang === 'tr' ? "🇹🇷 Dil Türkçe oldu." : "🇬🇧 UI translated to English.", 2000);
+                
+                if (typeof renderStudioTracks === 'function') renderStudioTracks();
+                
+                const gameIframe = document.getElementById('game-iframe');
+                if(gameIframe && gameIframe.contentDocument) {
+                    window.translateDOM(gameIframe.contentDocument.body);
+                }
+                
+                const legendToast = document.getElementById('legend-toast');
+                if (legendToast && legendToast.classList.contains('show')) {
+                    legendToast.classList.remove('show');
+                }
+            });
 }
 
 setTimeout(() => window.applyTranslations(), 150);
@@ -1733,6 +1945,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!secilenOption) {
                 // Eşleşme yoksa pencereyi gizle
                 pencere.classList.remove('pencere-acik');
+                const sagAlan = document.getElementById('pencere-akor-alani');
+                if(sagAlan) sagAlan.style.display = 'none';
                 return;
             }
 
@@ -1772,9 +1986,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             window.currentProgTitle = `🎤 ${sarki.sanatci} - ${sarki.sarki} (Akorları)`;
             if(typeof renderProgression === 'function') renderProgression();
+            
+            // YENİ KOD: Şarkı yüklendiğinde sağ panele akorları klonla
+            const sagAlan = document.getElementById('pencere-akor-alani');
+            if (sagAlan) {
+                sagAlan.innerHTML = '';
+                sagAlan.style.display = 'flex';
+                progression.forEach((chordObj, idx) => {
+                    const typeLabels = { "Maj": "", "Min": "m", "Dom7": "7", "Min7": "m7", "Maj7": "maj7" };
+                    const chordName = window.notes[chordObj.root] + (typeLabels[chordObj.type] !== undefined ? typeLabels[chordObj.type] : chordObj.type);
+                    const shape = chordObj.shape || window.generateVariations(chordObj.root, chordObj.type)[0]; 
+                    if (!shape) return;
 
-            baslikAlani.textContent = `${sarki.sanatci} - ${sarki.sarki}`;
-            // YENİ: Orjinal akoru 'data-orjinal' içine saklıyoruz ve tıklama olayını dinamik yapıyoruz
+                    const card = document.createElement('div'); 
+                    card.className = 'mini-chord-card'; 
+                    card.style.background = 'rgba(0,0,0,0.2)';
+                    card.innerHTML = `<div class="mini-chord-title">[${idx+1}] ${chordName}</div><div class="mini-fretboard" id="side-board-${idx}"></div><div class="mini-fret-numbers" id="side-nums-${idx}"></div>`;
+                    sagAlan.appendChild(card);
+
+                    const boardEl = document.getElementById(`side-board-${idx}`); 
+                    const numsEl = document.getElementById(`side-nums-${idx}`); 
+                    if (!boardEl || !numsEl) return;
+                    if (typeof isLefty !== 'undefined' && isLefty) { boardEl.classList.add('lefty'); numsEl.classList.add('lefty'); }
+
+                    let mappedShape = shape.map(s => { if (s.fret === 'x') return { fret: 'x', finger: null, isOpen: false }; if (s.fret === 0) return { fret: 0, finger: null, isOpen: true }; return { fret: s.fret, finger: s.finger, isOpen: false }; });
+                    let minFret = 99; mappedShape.forEach(s => { if (s.fret !== 'x' && !s.isOpen && s.fret < minFret) minFret = s.fret; }); if (minFret === 99) minFret = 1; let fretOffset = minFret > 1 ? minFret - 1 : 0;
+
+                    for (let i = 1; i <= 4; i++) { const fLine = document.createElement('div'); fLine.className = 'mini-fret-line'; fLine.style.left = `${(i / 4) * 100}%`; boardEl.appendChild(fLine); }
+                    for (let i = 0; i < 6; i++) { const sLine = document.createElement('div'); sLine.className = 'mini-string-line'; sLine.style.top = `${(i / 5) * 100}%`; boardEl.appendChild(sLine); }
+                    for (let i = 1; i <= 4; i++) { const numDiv = document.createElement('div'); numDiv.className = 'mini-fret-num'; numDiv.innerText = fretOffset + i; numsEl.appendChild(numDiv); }
+                    for (let stringIdx = 0; stringIdx < 6; stringIdx++) {
+                        const mData = mappedShape[5 - stringIdx]; const yPos = (stringIdx / 5) * 100;
+                        if (mData.fret === 'x' || mData.isOpen) { 
+                            const status = document.createElement('div'); status.className = (typeof isLefty !== 'undefined' && isLefty) ? 'mini-string-status lefty' : 'mini-string-status'; status.style.top = `${yPos}%`; status.innerText = mData.fret === 'x' ? 'x' : '0'; boardEl.appendChild(status);
+                        } else { 
+                            let relFret = mData.fret - fretOffset; 
+                            if (relFret >= 1 && relFret <= 4) { const fretWidth = 100 / 4; let rawX = (relFret * fretWidth) - (fretWidth / 2); let xPos = (typeof isLefty !== 'undefined' && isLefty) ? 100 - rawX : rawX; const dot = document.createElement('div'); dot.className = 'mini-dot'; dot.style.top = `${yPos}%`; dot.style.left = `${xPos}%`; dot.innerText = mData.finger || '•'; boardEl.appendChild(dot); } 
+                        }
+                    }
+                });
+            }
+
+            baslikAlani.textContent = `${sarki.sanatci} - ${sarki.sarki}`;            
+// YENİ: Orjinal akoru 'data-orjinal' içine saklıyoruz ve tıklama olayını dinamik yapıyoruz
             const isiltiliMetin = sarki.akorlarVeSozler.replace(akorRegex, '$1<span class="akor-isilti" title="Sesi ve klavye pozisyonunu görmek için tıkla" onclick="window.akorTiklandi(this.innerText)" data-orjinal="$2">$2</span>');
             icerikAlani.innerHTML = isiltiliMetin;
             window.songTransCount = 0; // Yeni şarkı açıldığında transpoze sıfırlanır
@@ -1949,7 +2203,7 @@ function initDraggableChordsForSong(songId) {
         if (!document.getElementById('trans-print-style')) {
             const style = document.createElement('style');
             style.id = 'trans-print-style';
-            style.innerHTML = `@media print { #song-trans-group, #btn-share-song-img { display: none !important; } }`;
+            style.innerHTML = `@media print { #song-trans-group, #btn-share-song-img, #prompter-group { display: none !important; } }`;
             document.head.appendChild(style);
         }
 
@@ -1994,11 +2248,11 @@ function initDraggableChordsForSong(songId) {
             if (window.showToast) {
                 let toastMsg = "";
                 if (window.songTransCount === 0) {
-                    toastMsg = "🎵 Şarkı orijinal tonuna geri döndü.";
+                    toastMsg = window.appLang === 'en' ? "🎵 Song returned to original key." : "🎵 Şarkı orijinal tonuna geri döndü.";
                 } else if (window.songTransCount > 0) {
-                    toastMsg = `🎵 Ton +${window.songTransCount} yarım ses tizleştirildi (İnce).`;
+                    toastMsg = window.appLang === 'en' ? `🎵 Key shifted up +${window.songTransCount} semitones.` : `🎵 Ton +${window.songTransCount} yarım ses tizleştirildi (İnce).`;
                 } else {
-                    toastMsg = `🎵 Ton ${window.songTransCount} yarım ses pesleştirildi (Kalın).`;
+                    toastMsg = window.appLang === 'en' ? `🎵 Key shifted down ${window.songTransCount} semitones.` : `🎵 Ton ${window.songTransCount} yarım ses pesleştirildi (Kalın).`;
                 }
                 window.showToast(toastMsg, 2500);
             }
@@ -2018,7 +2272,7 @@ function initDraggableChordsForSong(songId) {
         resetBtn.id = 'btn-reset-chords';
         resetBtn.className = 'btn btn-reset';
         resetBtn.style.cssText = "padding: 4px 10px; font-size: 11px; display: inline-block; margin-left: 15px; vertical-align: middle;";
-        resetBtn.innerHTML = "🔄 Akorları Sıfırla";
+        resetBtn.innerHTML = window.appLang === 'en' ? "🔄 Reset Chords" : "🔄 Akorları Sıfırla";
         const sarkiBaslik = document.getElementById('pencereSarkiIsmi');
         if (sarkiBaslik && sarkiBaslik.parentNode) {
             sarkiBaslik.parentNode.insertBefore(resetBtn, sarkiBaslik.nextSibling);
@@ -2047,7 +2301,7 @@ function initDraggableChordsForSong(songId) {
         const transDegerEl = document.getElementById('song-transpoze-deger');
         if (transDegerEl) transDegerEl.innerText = "0";
 
-        if(window.showToast) window.showToast("🔄 Akor konumları ve ton sıfırlandı!");
+        if(window.showToast) window.showToast(window.appLang === 'en' ? "🔄 Chords and key reset!" : "🔄 Akor konumları ve ton sıfırlandı!");
     });
 
     // 2. Yazdır (Print) Butonu
@@ -2057,7 +2311,7 @@ function initDraggableChordsForSong(songId) {
         printBtn.id = 'btn-print-song';
         printBtn.className = 'btn';
         printBtn.style.cssText = "padding: 4px 10px; font-size: 11px; display: inline-block; margin-left: 10px; vertical-align: middle; background: var(--primary); color: white; border: none; cursor: pointer;";
-        printBtn.innerHTML = "🖨️ Yazdır";
+        printBtn.innerHTML = window.appLang === 'en' ? "🖨️ Print" : "🖨️ Yazdır";
         
         newResetBtn.parentNode.insertBefore(printBtn, newResetBtn.nextSibling);
         
@@ -2087,14 +2341,14 @@ function initDraggableChordsForSong(songId) {
         shareBtn.id = 'btn-share-song-img';
         shareBtn.className = 'btn';
         shareBtn.style.cssText = "padding: 4px 10px; font-size: 11px; display: inline-block; margin-left: 10px; vertical-align: middle; background: #845ef7; color: white; border: none; cursor: pointer; border-radius: 6px;";
-        shareBtn.innerHTML = "📸 Resim Olarak Paylaş";
+        shareBtn.innerHTML = window.appLang === 'en' ? "📸 Share as Image" : "📸 Resim Olarak Paylaş";
         
         printBtn.parentNode.insertBefore(shareBtn, printBtn.nextSibling);
         
         shareBtn.addEventListener('click', () => {
             const btn = shareBtn;
             const originalText = btn.innerHTML;
-            btn.innerHTML = "⏳ Hazırlanıyor...";
+            btn.innerHTML = window.appLang === 'en' ? "⏳ Preparing..." : "⏳ Hazırlanıyor...";
             btn.disabled = true;
 
             try {
@@ -2155,7 +2409,7 @@ function initDraggableChordsForSong(songId) {
                             a.download = fileName;
                             a.click();
                             URL.revokeObjectURL(downloadUrl);
-                            if(window.showToast) window.showToast("📸 Resim indirildi! İstediğiniz platformda paylaşabilirsiniz.");
+                            if(window.showToast) window.showToast(window.appLang === 'en' ? "📸 Image downloaded!" : "📸 Resim indirildi! İstediğiniz platformda paylaşabilirsiniz.");
                         }
                         
                         btn.innerHTML = originalText;
@@ -2164,7 +2418,7 @@ function initDraggableChordsForSong(songId) {
                 };
                 
                 img.onerror = function() {
-                    if(window.showToast) window.showToast("⚠️ Resim oluşturulurken hata oluştu.");
+                    if(window.showToast) window.showToast(window.appLang === 'en' ? "⚠️ Image creation failed." : "⚠️ Resim oluşturulurken hata oluştu.");
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 };
@@ -2177,24 +2431,119 @@ function initDraggableChordsForSong(songId) {
             }
         });
     }
+
+    // 4. Teleprompter (Oto-Kaydır) Modülü
+    let prompterGroup = document.getElementById('prompter-group');
+    if (!prompterGroup) {
+        prompterGroup = document.createElement('div');
+        prompterGroup.id = 'prompter-group';
+        prompterGroup.style.cssText = "display:inline-flex; align-items:center; gap: 8px; margin-left: 10px; vertical-align: middle; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);";
+        prompterGroup.innerHTML = `
+            <button id="btn-prompter-toggle" class="btn" style="padding: 2px 8px; font-size: 11px; font-weight: bold; background: var(--surface); color: var(--text); border: 1px solid var(--border);">${window.appLang === 'en' ? "▶ Auto-Scroll" : "▶ Oto-Kaydır"}</button>
+            <div style="display: flex; align-items: center; gap: 4px;" title="Kaydırma Hızı">
+                <button class="btn" id="btn-prompter-slower" style="padding:0 5px; font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); line-height:1; min-height:16px;">-</button>
+                <input type="range" id="prompter-speed" min="0.05" max="1.5" step="0.01" value="0.3" style="width: 50px; margin: 0;">
+                <button class="btn" id="btn-prompter-faster" style="padding:0 5px; font-size:12px; background:var(--surface); border:1px solid var(--border); color:var(--text); line-height:1; min-height:16px;">+</button>
+            </div>
+        `;
+        
+        const shareBtnEl = document.getElementById('btn-share-song-img');
+        if (shareBtnEl && shareBtnEl.parentNode) {
+            shareBtnEl.parentNode.insertBefore(prompterGroup, shareBtnEl.nextSibling);
+            
+            const baslik = shareBtnEl.parentNode;
+            baslik.style.position = 'sticky';
+            baslik.style.top = '-20px';
+            baslik.style.background = 'rgba(20, 20, 25, 0.98)';
+            baslik.style.zIndex = '100';
+            baslik.style.margin = '-20px -20px 20px -20px';
+            baslik.style.padding = '20px 20px 15px 20px';
+            baslik.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+        }
+        
+        window.prompterRAF = null;
+        window.isPrompterRunning = false;
+        window.prompterSpeed = 0.3; 
+        window.exactScrollTop = 0; // YENİ: Küsüratlı (çok yavaş) kaydırmaları hafızada tutmak için
+        
+        document.getElementById('btn-prompter-toggle').addEventListener('click', () => {
+            const btn = document.getElementById('btn-prompter-toggle');
+            const container = document.getElementById('estetikPencere');
+            if (window.isPrompterRunning) {
+                window.isPrompterRunning = false;
+                cancelAnimationFrame(window.prompterRAF);
+                btn.innerHTML = window.appLang === 'en' ? "▶ Auto-Scroll" : "▶ Oto-Kaydır";
+                btn.style.color = "var(--text)";
+            } else {
+                window.isPrompterRunning = true;
+                btn.innerHTML = window.appLang === 'en' ? "⏸ Stop" : "⏸ Durdur";
+                btn.style.color = "var(--danger)";
+                window.exactScrollTop = container.scrollTop; // Başlarken tam konumu kaydet
+                
+                const runPrompter = () => {
+                    if(!window.isPrompterRunning) return;
+                    if(container.scrollTop + container.clientHeight >= container.scrollHeight - 1) {
+                        window.isPrompterRunning = false;
+                        btn.innerHTML = window.appLang === 'en' ? "▶ Auto-Scroll" : "▶ Oto-Kaydır";
+                        btn.style.color = "var(--text)";
+                        return;
+                    }
+                    // YENİ: Tarayıcının küsüratları silip durmasını engeller
+                    window.exactScrollTop += window.prompterSpeed;
+                    container.scrollTop = window.exactScrollTop;
+                    window.prompterRAF = requestAnimationFrame(runPrompter);
+                };
+                runPrompter();
+            }
+        });
+
+        const updatePrompterSpeed = (val) => {
+            window.prompterSpeed = parseFloat(val);
+            document.getElementById('prompter-speed').value = window.prompterSpeed;
+        };
+        
+        document.getElementById('prompter-speed').addEventListener('input', (e) => updatePrompterSpeed(e.target.value));
+        document.getElementById('btn-prompter-slower').addEventListener('click', () => {
+            let newVal = Math.max(0.05, window.prompterSpeed - 0.05); // Hassas eksi
+            updatePrompterSpeed(newVal.toFixed(2));
+        });
+        document.getElementById('btn-prompter-faster').addEventListener('click', () => {
+            let newVal = Math.min(1.5, window.prompterSpeed + 0.05); // Hassas artı
+            updatePrompterSpeed(newVal.toFixed(2));
+        });
+    } else {
+        // Yeni şarkı açıldığında önceden çalışan prompter'ı sıfırla
+        window.isPrompterRunning = false;
+        cancelAnimationFrame(window.prompterRAF);
+        const btn = document.getElementById('btn-prompter-toggle');
+        if(btn) {
+            btn.innerHTML = window.appLang === 'en' ? "▶ Auto-Scroll" : "▶ Oto-Kaydır";
+            btn.style.color = "var(--text)";
+        }
+    }
 }
+
 // --- RETRO MİNİ OYNATICI (BAĞLAMSAL ENJEKSİYON) ---
 function initRetroPlayer() {
     const timelineEl = document.getElementById('prog-timeline');
     // Eğer akor dizisi bölümü yoksa veya oynatıcı zaten eklendiyse iptal et
     if (!timelineEl || document.getElementById('retro-player-wrap')) return;
 
+    const tPlay = window.appLang === 'en' ? "▶ PLAY" : "▶ OYNAT";
+    const tMetro = window.appLang === 'en' ? "🥁 METRONOME" : "🥁 METRONOM";
+    const tReady = window.appLang === 'en' ? "AKORSTUDYO AMP v1.0 ... READY ..." : "AKORSTUDYO AMP v1.0 ... HAZIR ...";
+
     const playerHtml = `
     <div id="retro-player-wrap">
         <div class="retro-close" id="retro-btn-close" title="Kapat">✖</div>
         <div class="retro-screen">
             <canvas id="retro-vis"></canvas>
-            <div class="retro-text" id="retro-marquee">AKORSTUDYO AMP v1.0 ... HAZIR ...</div>
+            <div class="retro-text" id="retro-marquee">${tReady}</div>
         </div>
         <div class="retro-controls">
             <div style="display: flex; gap: 8px;">
-                <button class="retro-btn" id="retro-btn-play">▶ OYNAT</button>
-                <button class="retro-btn" id="retro-btn-metro">🥁 METRONOM</button>
+                <button class="retro-btn" id="retro-btn-play">${tPlay}</button>
+                <button class="retro-btn" id="retro-btn-metro">${tMetro}</button>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; color: #aaa; font-size: 11px; font-weight: bold;">
                 VOL <input type="range" class="retro-slider" id="retro-vol" min="0" max="1" step="0.01" value="0.7">
@@ -2234,7 +2583,9 @@ function initRetroPlayer() {
     document.getElementById('retro-btn-metro').addEventListener('click', () => {
         const mBtn = document.getElementById('btn-metro');
         if(mBtn) mBtn.click();
-        marquee.innerText = window.isMetroOn ? "🥁 METRONOM: AKTİF (BPM: " + window.bpm + ")" : "AKORSTUDYO AMP v1.0 ... METRONOM: KAPALI";
+        const tOn = window.appLang === 'en' ? "🥁 METRONOME: ACTIVE (BPM: " : "🥁 METRONOM: AKTİF (BPM: ";
+        const tOff = window.appLang === 'en' ? "AKORSTUDYO AMP v1.0 ... METRONOME: OFF" : "AKORSTUDYO AMP v1.0 ... METRONOM: KAPALI";
+        marquee.innerText = window.isMetroOn ? tOn + window.bpm + ")" : tOff;
     });
 
     document.getElementById('retro-btn-play').addEventListener('click', () => {
@@ -2242,15 +2593,15 @@ function initRetroPlayer() {
         if(pBtn) pBtn.click();
         setTimeout(() => {
             const isPlayingNow = window.isPlayingProgression;
-            document.getElementById('retro-btn-play').innerText = isPlayingNow ? "⏹ DURDUR" : "▶ OYNAT";
-            marquee.innerText = isPlayingNow ? "▶ OYNATILIYOR: AKOR DİZİSİ" : "AKORSTUDYO AMP v1.0 ... HAZIR";
+            document.getElementById('retro-btn-play').innerText = isPlayingNow ? (window.appLang === 'en' ? "⏹ STOP" : "⏹ DURDUR") : (window.appLang === 'en' ? "▶ PLAY" : "▶ OYNAT");
+            marquee.innerText = isPlayingNow ? (window.appLang === 'en' ? "▶ PLAYING: CHORD SEQUENCE" : "▶ OYNATILIYOR: AKOR DİZİSİ") : (window.appLang === 'en' ? "AKORSTUDYO AMP v1.0 ... READY" : "AKORSTUDYO AMP v1.0 ... HAZIR");
         }, 50);
     });
     
     document.getElementById('retro-vol').addEventListener('input', (e) => {
         window.chordVol = parseFloat(e.target.value);
         window.metroVol = parseFloat(e.target.value);
-        marquee.innerText = "SES SEVİYESİ: %" + Math.round(e.target.value * 100);
+        marquee.innerText = (window.appLang === 'en' ? "VOLUME: %" : "SES SEVİYESİ: %") + Math.round(e.target.value * 100);
     });
 
     // Ana "Diziyi Çal" butonuna basıldığında Retro Oynatıcıyı otomatik göster ve senkronize et
@@ -2264,8 +2615,8 @@ function initRetroPlayer() {
             }
             setTimeout(() => {
                 const isPlayingNow = window.isPlayingProgression;
-                document.getElementById('retro-btn-play').innerText = isPlayingNow ? "⏹ DURDUR" : "▶ OYNAT";
-                marquee.innerText = isPlayingNow ? "▶ OYNATILIYOR: AKOR DİZİSİ" : "AKORSTUDYO AMP v1.0 ... HAZIR";
+                document.getElementById('retro-btn-play').innerText = isPlayingNow ? (window.appLang === 'en' ? "⏹ STOP" : "⏹ DURDUR") : (window.appLang === 'en' ? "▶ PLAY" : "▶ OYNAT");
+                marquee.innerText = isPlayingNow ? (window.appLang === 'en' ? "▶ PLAYING: CHORD SEQUENCE" : "▶ OYNATILIYOR: AKOR DİZİSİ") : (window.appLang === 'en' ? "AKORSTUDYO AMP v1.0 ... READY" : "AKORSTUDYO AMP v1.0 ... HAZIR");
             }, 50);
         });
     }
@@ -2367,16 +2718,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showWelcomeToast() {
         if (!welcomeToast) return;
-        welcomeToast.style.display = "block"; // Ekranda olduğundan emin ol
+        welcomeToast.style.display = "block";
         clearTimeout(autoCloseTimer);
-
         setTimeout(() => {
             if (typeof updateLanguage === 'function') { updateLanguage(); }
             welcomeToast.classList.add("toast-show");
-
-            autoCloseTimer = setTimeout(() => {
-                closeWelcomeToast();
-            }, 15000);
+            autoCloseTimer = setTimeout(closeWelcomeToast, 15000);
         }, 500);
     }
 
@@ -2384,24 +2731,179 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!welcomeToast) return;
         welcomeToast.classList.remove("toast-show");
         setTimeout(() => { welcomeToast.style.display = "none"; }, 600); 
+        // YENİ: Kullanıcı mesajı kapattığında veya süre dolduğunda hafızaya yaz
+        localStorage.setItem("gitar_welcome_seen", "true");
     }
 
     if (welcomeToast && closeBtn) {
-        // 1. Her sayfa açılışında çalıştır (Gizlilik politikasından 1.5 sn sonra çıksın diye süreyi uzattık)
-        setTimeout(showWelcomeToast, 2500);
+        // YENİ: SADECE KULLANICI DAHA ÖNCE BU MESAJI GÖRMEDİYSE ÇALIŞTIR
+        if (!localStorage.getItem("gitar_welcome_seen")) {
+            setTimeout(showWelcomeToast, 2500);
+        }
 
-        // 2. Kapatma butonuna basınca gizle
         closeBtn.addEventListener("click", () => {
             clearTimeout(autoCloseTimer);
             closeWelcomeToast();
         });
 
-        // 3. Dil değiştiğinde mesajı yeni dilde tekrar tetikle
         if (langSelect) {
             langSelect.addEventListener("change", () => {
-                closeWelcomeToast(); // Varsa eskisini kapat
-                setTimeout(showWelcomeToast, 800); // Yeni dilde tekrar aç
+                // Sadece mesaj o an ekranda açıksa yeni dile göre çevirip göster (Gizliyse rahatsız etme)
+                if(welcomeToast.classList.contains("toast-show")) {
+                    welcomeToast.classList.remove("toast-show");
+                    setTimeout(() => { welcomeToast.style.display = "none"; showWelcomeToast(); }, 600);
+                }
             });
         }
     }
 });
+// --- EFSANEVİ MESAJ (TOAST) SİSTEMİ ---
+function showLegendMessage(title, text) {
+    let toast = document.getElementById("legend-toast");
+    
+    // Eğer sayfada toast elementi yoksa JS ile anında oluştur
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "legend-toast";
+        document.body.appendChild(toast);
+    }
+    
+    // İçeriği doldur (Gitar emojisi ile şık bir başlık)
+    toast.innerHTML = `<h4>🎸 ${title}</h4><p style="margin:0; line-height:1.5;">${text}</p>`;
+    toast.className = "show";
+    
+    // Eğer peş peşe mesaj gelirse eski zamanlayıcıyı sıfırla, 7 saniye ekranda tut
+    clearTimeout(toast.timeoutId);
+    toast.timeoutId = setTimeout(function(){ 
+        toast.className = toast.className.replace("show", ""); 
+    }, 7000);
+}
+// --- PROJE DIŞA/İÇE AKTARMA (.akor) SİSTEMİ ---
+window.exportProject = async () => {
+    if(tracks.length === 0 && progression.length === 0) {
+        if (window.showToast) showToast(window.appLang === 'en' ? "⚠️ Studio is empty, nothing to save!" : "⚠️ Stüdyo boş, kaydedilecek bir şey yok!");
+        return;
+    }
+    
+    if (window.showToast) showToast(window.appLang === 'en' ? "⏳ Saving Project..." : "⏳ Proje Paketleniyor...");
+
+    try {
+        const blobToBase64 = (blob) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+
+        const tracksData = await Promise.all(tracks.map(async (t) => {
+            const b64 = await blobToBase64(t.blob);
+            return {
+                name: t.name,
+                blob64: b64,
+                settings: {
+                    vol: t.audio.volume, pan: t.pan || 0, reverb: t.reverb || 0,
+                    latency: t.latency || 0, isMuted: t.isMuted || false,
+                    solo: t.solo || false, loop: t.audio.loop || false,
+                    eqLow: t.eqLow || 0, eqMid: t.eqMid || 0, eqHigh: t.eqHigh || 0
+                }
+            };
+        }));
+
+        const projectData = {
+            version: "1.0",
+            session: { p: progression, b: window.bpm, s: window.domCache.rhythmStyle ? window.domCache.rhythmStyle.value : 'down' },
+            tracks: tracksData
+        };
+
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projectData));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+        dlAnchorElem.setAttribute("download", `AkorStudyo_Proje_${dateStr}.akor`);
+        document.body.appendChild(dlAnchorElem);
+        dlAnchorElem.click();
+        document.body.removeChild(dlAnchorElem);
+        
+        if (window.showToast) showToast(window.appLang === 'en' ? "💾 Project exported successfully!" : "💾 Proje başarıyla indirildi!");
+    } catch(e) {
+        console.error(e);
+        if (window.showToast) showToast(window.appLang === 'en' ? "⚠️ Error exporting project." : "⚠️ Proje dışa aktarılırken bir hata oluştu.");
+    }
+};
+
+window.importProject = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        try {
+            const projectData = JSON.parse(event.target.result);
+            
+            // 1. Akor Dizisi ve Metronomu (Session) Geri Yükle
+            if(projectData.session) {
+                if(projectData.session.b) { window.bpm = projectData.session.b; if(window.domCache.bpmSlider) window.domCache.bpmSlider.value = window.bpm; if(window.domCache.bpmInput) window.domCache.bpmInput.value = window.bpm; }
+                if(projectData.session.s && window.domCache.rhythmStyle) window.domCache.rhythmStyle.value = projectData.session.s;
+                if(projectData.session.p && Array.isArray(projectData.session.p)) { progression = projectData.session.p; if (typeof renderProgression === 'function') renderProgression(); }
+                if (typeof saveSession === 'function') saveSession();
+            }
+
+            // 2. Ses Kanallarını ve Ayarları Geri Yükle
+            if(projectData.tracks && projectData.tracks.length > 0) {
+                if (window.showToast) showToast(window.appLang === 'en' ? "⏳ Loading audio tracks..." : "⏳ Ses kanalları stüdyoya kuruluyor...");
+                
+                // YENİ: CSP Güvenlik Duvarına Takılmayan Base64 -> Blob Dönüştürücü
+                const b64toBlob = (dataURI) => {
+                    const parts = dataURI.split(',');
+                    const mime = parts[0].match(/:(.*?);/)[1];
+                    const bstr = atob(parts[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while (n--) {
+                        u8arr[n] = bstr.charCodeAt(n);
+                    }
+                    return new Blob([u8arr], { type: mime });
+                };
+
+                for(let tData of projectData.tracks) {
+                    const blob = b64toBlob(tData.blob64);
+                    await new Promise(resolve => {
+                        if (typeof saveTrackToDB === 'function') {
+                            saveTrackToDB(tData.name, blob, (newId) => {
+                                const url = URL.createObjectURL(blob);
+                                let a = new Audio(url);
+                                if (tData.settings) {
+                                    a.volume = tData.settings.vol !== undefined ? tData.settings.vol : 1.0;
+                                    a.loop = tData.settings.loop || false;
+                                }
+                                const newT = { id: newId, name: tData.name, blob: blob, audio: a, selected: false };
+                                if (tData.settings) {
+                                    newT.pan = tData.settings.pan || 0; newT.reverb = tData.settings.reverb || 0;
+                                    newT.latency = tData.settings.latency || 0; newT.isMuted = tData.settings.isMuted || false;
+                                    newT.solo = tData.settings.solo || false; newT.eqLow = tData.settings.eqLow || 0;
+                                    newT.eqMid = tData.settings.eqMid || 0; newT.eqHigh = tData.settings.eqHigh || 0;
+                                }
+                                tracks.push(newT);
+                                if (typeof setupTrackRouting === 'function') setupTrackRouting(tracks.length - 1);
+                                
+                                // DB'ye ayarları da eşitle
+                                if (typeof db !== 'undefined' && db) {
+                                    const tx = db.transaction("tracks", "readwrite"); 
+                                    tx.objectStore("tracks").put({ id: newId, name: tData.name, blob: blob, settings: tData.settings });
+                                }
+                                resolve();
+                            });
+                        } else { resolve(); }
+                    });
+                }
+                if(typeof window.applyMuteSoloState === 'function') window.applyMuteSoloState();
+                if(typeof renderStudioTracks === 'function') renderStudioTracks();
+            }
+            if (window.showToast) showToast(window.appLang === 'en' ? "📂 Project loaded successfully!" : "📂 Proje başarıyla yüklendi!");
+        } catch(err) {
+            console.error(err);
+            if (window.showToast) showToast(window.appLang === 'en' ? "⚠️ Invalid or corrupted .akor file!" : "⚠️ Geçersiz veya bozuk .akor dosyası!");
+        }
+        e.target.value = ''; // Input'u sıfırla ki aynı dosyayı tekrar yükleyebilsin
+    };
+    reader.readAsText(file);
+};
